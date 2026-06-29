@@ -161,18 +161,6 @@ html.a11y-high-contrast {
 }
 .animate-fade-up { animation: fade-up 0.9s cubic-bezier(0.4, 0, 0.2, 1) both; }
 
-/* Page transition — plays on every route change (App Router template.tsx).
-   GPU-friendly (transform + opacity only), soft expo-out easing. */
-@keyframes page-enter {
-  0% { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.988); }
-  55% { opacity: 1; }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-}
-.page-transition {
-  animation: page-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
-}
-
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
