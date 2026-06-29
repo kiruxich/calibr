@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import { BookingForm } from "@/components/booking/BookingForm";
 import { CallbackForm } from "@/components/booking/CallbackForm";
+import { FaqJsonLd } from "@/components/seo/JsonLd";
 import { FAQ_ITEMS } from "@/lib/data/docs";
 import { SITE, WORK_HOURS } from "@/lib/data/site";
 
 export const metadata: Metadata = {
   title: "Контакты",
-  description: "Адрес, телефоны, график работы и форма записи школы «КАЛИБР».",
+  description: "Адрес, телефоны, график работы, карта проезда и форма онлайн-записи школы стрелковой подготовки «КАЛИБР» в Воскресенске.",
+  alternates: { canonical: "/kontakty" },
 };
 
 export default function ContactsPage() {
   return (
     <>
+      <FaqJsonLd items={FAQ_ITEMS} />
       <section className="page-hero">
         <div className="container-page relative">
           <h1 className="section-title">Контакты</h1>
@@ -41,12 +44,20 @@ export default function ContactsPage() {
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <a
-                href={`https://wa.me/${SITE.whatsapp}`}
+                href={SITE.maxUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary text-sm"
               >
-                WhatsApp
+                MAX
+              </a>
+              <a
+                href={`https://t.me/${SITE.telegram}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary text-sm"
+              >
+                Telegram
               </a>
             </div>
           </div>

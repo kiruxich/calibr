@@ -7,8 +7,17 @@ export function PremiumHero() {
     <section className="relative min-h-[90vh] overflow-hidden bg-[var(--bg)] lg:min-h-screen">
       <ShopifyHeroScene />
 
-      <div className="pointer-events-none absolute inset-0 hero-vignette-top opacity-60" />
+      <div className="pointer-events-none absolute inset-0 hero-vignette-top opacity-70" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 hero-vignette" />
+
+      {/* Readability scrim behind the text block */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 z-[5] h-[460px] w-[min(92vw,880px)] -translate-x-1/2 -translate-y-1/2"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(11,11,13,0.92) 0%, rgba(11,11,13,0.7) 42%, rgba(11,11,13,0) 72%)",
+        }}
+      />
 
       <div className="relative z-10 flex min-h-[90vh] flex-col items-center justify-center px-4 pb-16 pt-28 text-center lg:min-h-screen lg:pt-32">
         <div className="animate-fade-up mb-6 inline-block">
@@ -16,8 +25,8 @@ export function PremiumHero() {
             <div className="gradient-border-layer rounded-full">
               <div className="gradient-rotator gradient-shimmer" />
             </div>
-            <div className="relative z-10 rounded-full border border-transparent bg-[var(--bg-elevated)] px-4 py-2 sm:px-5 sm:py-2.5">
-              <p className="text-xs font-extralight text-[var(--text)] sm:text-sm">
+            <div className="relative z-10 rounded-full border border-transparent bg-[var(--bg-elevated)] px-5 py-2.5">
+              <p className="text-sm font-medium text-[var(--text-secondary)]">
                 Московская область · Воскресенск
               </p>
             </div>
@@ -25,17 +34,20 @@ export function PremiumHero() {
         </div>
 
         <h1
-          className="animate-fade-up max-w-4xl text-3xl font-extralight leading-[1.15] text-white sm:text-4xl lg:text-5xl xl:text-6xl"
-          style={{ animationDelay: "0.1s" }}
+          className="animate-fade-up max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl"
+          style={{
+            animationDelay: "0.1s",
+            textShadow: "0 2px 30px rgba(0,0,0,0.8)",
+          }}
         >
           Школа стрелковой
           <br />
-          <span className="font-light text-[var(--accent)]">подготовки «КАЛИБР»</span>
+          <span className="text-[var(--accent)]">подготовки «КАЛИБР»</span>
         </h1>
 
         <p
-          className="animate-fade-up mt-5 max-w-xl text-sm font-light leading-relaxed text-[var(--text-secondary)] sm:text-base lg:text-lg"
-          style={{ animationDelay: "0.2s" }}
+          className="animate-fade-up mt-6 max-w-2xl text-lg font-normal leading-relaxed text-[var(--text-secondary)] sm:text-xl"
+          style={{ animationDelay: "0.2s", textShadow: "0 1px 20px rgba(0,0,0,0.9)" }}
         >
           {SITE.tagline}. Обучение, аттестация, спортивные секции и тир 25 метров.
         </p>
@@ -52,7 +64,7 @@ export function PremiumHero() {
           </Link>
         </div>
 
-        <p className="mt-8 text-xs font-extralight text-[var(--text-muted)]">
+        <p className="mt-8 text-sm font-medium text-[var(--text-muted)]">
           {SITE.phones[0].display} · {SITE.email}
         </p>
       </div>

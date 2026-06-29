@@ -14,25 +14,28 @@ export const SITE = {
   ],
   youtube: "https://www.youtube.com/embed/AQzfHz-DuwQ",
   yandexMapsOrg: "https://yandex.ru/maps/",
-  whatsapp: "79055032389",
-  telegram: "https://t.me/",
+  max: "kalibr_school",
+  maxUrl: "https://max.ru/kalibr_school",
+  telegram: "kalibr_school",
+  rating: { value: 4.9, count: 127 },
+  geo: { lat: 55.31556, lng: 38.69556 },
+  founded: 2016,
 } as const;
 
 export const NAV = [
-  { href: "/", label: "Главная" },
-  {
-    href: "#",
-    label: "Услуги",
-    children: [
-      { href: "/obuchenie-grazhdan", label: "Обучение граждан" },
-      { href: "/okhranniki", label: "Подготовка охранников" },
-      { href: "/sektsii", label: "Секции и Action Air" },
-      { href: "/arenda-tira", label: "Аренда тира" },
-    ],
-  },
+  { href: "/uslugi", label: "Услуги" },
   { href: "/raspisanie", label: "Расписание" },
   { href: "/tseny", label: "Цены" },
   { href: "/trenazhyor", label: "Тренажёр" },
+  { href: "/kontakty", label: "Контакты" },
+] as const;
+
+export const FOOTER_NAV = [
+  { href: "/uslugi", label: "Услуги" },
+  { href: "/raspisanie", label: "Расписание" },
+  { href: "/tseny", label: "Цены и калькулятор" },
+  { href: "/oplata", label: "Оплата и сертификаты" },
+  { href: "/trenazhyor", label: "Тренажёр-тест" },
   { href: "/docs", label: "Сведения об организации" },
   { href: "/kontakty", label: "Контакты" },
 ] as const;

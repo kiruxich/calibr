@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DIRECTION_OPTIONS } from "@/lib/data/prices";
 import { UPCOMING_SLOTS } from "@/lib/data/schedule";
+import { maskPhone } from "@/lib/utils";
 
 export interface BookingFormProps {
   defaultService?: string;
@@ -17,6 +18,7 @@ export function BookingForm({
 }: BookingFormProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [phone, setPhone] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -56,7 +58,16 @@ export function BookingForm({
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Телефон *</span>
-          <input name="phone" type="tel" required className="input-field" placeholder="+7 (___) ___-__-__" />
+          <input
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(maskPhone(e.target.value))}
+            className="input-field"
+            placeholder="+7 (___) ___-__-__"
+          />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Email *</span>
@@ -105,10 +116,10 @@ export function BookingForm({
       </button>
 
       {status === "success" && (
-        <p className="rounded-lg bg-green-50 p-3 text-sm text-[var(--success)]">{message}</p>
+        <p className="rounded-lg border border-[var(--success)]/40 bg-[var(--success)]/10 p-3 text-sm text-[var(--success)]">{message}</p>
       )}
       {status === "error" && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-[var(--error)]">{message}</p>
+        <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">{message}</p>
       )}
     </form>
   );

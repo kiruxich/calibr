@@ -6,12 +6,14 @@ const BASE = "https://voskres-calibr.ru";
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
     "",
+    "/uslugi",
     "/obuchenie-grazhdan",
     "/okhranniki",
     "/sektsii",
     "/arenda-tira",
     "/raspisanie",
     "/tseny",
+    "/oplata",
     "/trenazhyor",
     "/docs",
     "/kontakty",

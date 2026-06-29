@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAV, SITE } from "@/lib/data/site";
+import { FOOTER_NAV, SITE } from "@/lib/data/site";
 
 export function Footer() {
   return (
@@ -14,7 +14,7 @@ export function Footer() {
         <div>
           <p className="mb-4 text-xs uppercase tracking-wider text-[var(--text-muted)]">Навигация</p>
           <ul className="space-y-2.5">
-            {NAV.filter((n) => n.href !== "#").map((item) => (
+            {FOOTER_NAV.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="text-sm font-light text-[var(--text-secondary)] transition hover:text-[var(--accent)]">
                   {item.label}
