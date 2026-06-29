@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 
@@ -103,17 +103,23 @@ function Rifle() {
   const flashMat = useRef<THREE.MeshBasicMaterial>(null);
   const flashLight = useRef<THREE.PointLight>(null);
 
+  const flashCoreMat = useRef<THREE.MeshBasicMaterial>(null);
+
   useFrame(({ clock }) => {
     const phase = clock.elapsedTime % SHOT_PERIOD;
     const amt = phase < FLASH_DUR ? 1 - phase / FLASH_DUR : 0;
+    const on = amt > 0.01;
 
     if (recoil.current) recoil.current.position.x = -amt * 0.14;
     if (flash.current) {
-      flash.current.visible = amt > 0.01;
+      flash.current.visible = on;
       const s = 0.4 + amt * 1.1;
       flash.current.scale.set(s * (1 + Math.random() * 0.15), s, s);
     }
     if (flashMat.current) flashMat.current.opacity = amt;
+    if (flashCoreMat.current) flashCoreMat.current.opacity = amt * 0.85;
+    // Light stays in the scene permanently (intensity 0 when idle) to avoid
+    // re-adding a light source each shot, which would recompile shaders and stutter.
     if (flashLight.current) flashLight.current.intensity = amt * 7;
   });
 
@@ -240,16 +246,18 @@ function Rifle() {
           <meshStandardMaterial color="#e0aa4e" emissive="#e0aa4e" emissiveIntensity={0.7} metalness={1} roughness={0.2} />
         </mesh>
 
-        {/* muzzle flash */}
+        {/* muzzle flash light — always present (intensity animated) to keep the
+            scene's light count constant and prevent per-shot shader recompiles */}
+        <pointLight ref={flashLight} position={[1.6, 0.06, 0]} color="#ffd07a" intensity={0} distance={4} />
+        {/* muzzle flash meshes (toggling mesh visibility is cheap) */}
         <group ref={flash} position={[1.6, 0.06, 0]} visible={false}>
-          <pointLight ref={flashLight} color="#ffd07a" intensity={0} distance={4} />
           <mesh rotation={[0, 0, -Math.PI / 2]}>
             <coneGeometry args={[0.22, 0.5, 12]} />
             <meshBasicMaterial ref={flashMat} color="#ffe6a8" transparent opacity={0} />
           </mesh>
           <mesh>
             <sphereGeometry args={[0.15, 16, 16]} />
-            <meshBasicMaterial color="#fff2cc" transparent opacity={0.85} />
+            <meshBasicMaterial ref={flashCoreMat} color="#fff2cc" transparent opacity={0} />
           </mesh>
         </group>
       </group>
@@ -347,7 +355,7 @@ function Tracer() {
 }
 
 /** Lightweight drifting particle field (portable across WebGPU/WebGL). */
-function Particles({ count = 110 }: { count?: number }) {
+function Particles({ count = 70 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -424,11 +432,42 @@ function Scene() {
 }
 
 export function ShopifyHeroScene() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  // Render only while the hero is on screen and the tab is visible. This keeps
+  // the GPU idle when scrolled away and frees the main thread before navigation.
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    let onScreen = true;
+    const update = () => setActive(onScreen && !document.hidden);
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+        update();
+      },
+      { threshold: 0.05 },
+    );
+    io.observe(el);
+
+    const onVis = () => update();
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
   return (
-    <div className="hero-3d-canvas" aria-hidden>
+    <div className="hero-3d-canvas" aria-hidden ref={wrapRef}>
       <Canvas
         camera={{ position: [0, 0, 6], fov: 42 }}
-        dpr={[1, 1.75]}
+        dpr={[1, 1.5]}
+        frameloop={active ? "always" : "never"}
         gl={createRenderer as unknown as GLFactory}
       >
         <Scene />

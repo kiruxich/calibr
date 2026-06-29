@@ -79,6 +79,8 @@ export default function ContactsPage() {
               src="https://yandex.ru/map-widget/v1/?text=Воскресенск+Московская+23&z=16"
               title="Карта — школа КАЛИБР"
               className="h-full w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
             />
           </div>

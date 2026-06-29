@@ -22,7 +22,7 @@ export default function OgImage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, color: "#e0aa4e", fontSize: 30, letterSpacing: 4 }}>
-          ◆ ВОСКРЕСЕНСК · МОСКОВСКАЯ ОБЛАСТЬ
+          ВОСКРЕСЕНСК · МОСКОВСКАЯ ОБЛАСТЬ
         </div>
         <div style={{ display: "flex", fontSize: 92, fontWeight: 800, marginTop: 24, lineHeight: 1.05 }}>
           Школа стрельбы
@@ -34,7 +34,7 @@ export default function OgImage() {
           Обучение · Охранники · Секции IPSC · Аренда тира 25 м
         </div>
         <div style={{ display: "flex", gap: 24, marginTop: 48, fontSize: 28, color: "#9aa0ab" }}>
-          <span>★ {SITE.rating.value} ({SITE.rating.count} отзывов)</span>
+          <span>Рейтинг {SITE.rating.value} ({SITE.rating.count} отзывов)</span>
           <span>·</span>
           <span>Лицензия Рособрнадзора</span>
         </div>

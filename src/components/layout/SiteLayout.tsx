@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingContact } from "@/components/layout/FloatingContact";
+import { CookieBanner } from "@/components/layout/CookieBanner";
 import { A11yProvider } from "@/components/a11y/A11yProvider";
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,7 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 pt-0">{children}</main>
       <Footer />
       <FloatingContact />
+      <CookieBanner />
       <div className="bg-grain" aria-hidden />
     </A11yProvider>
   );
