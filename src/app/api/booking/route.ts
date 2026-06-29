@@ -3,6 +3,8 @@ import path from "path";
 import { NextResponse } from "next/server";
 import { UPCOMING_SLOTS } from "@/lib/data/schedule";
 import { DIRECTION_OPTIONS } from "@/lib/data/prices";
+import { hasDb } from "@/db";
+import { createBooking, getSlotById, type BookingInput } from "@/db/queries";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -19,49 +21,40 @@ interface RequestPayload {
   consent?: string | boolean;
 }
 
-interface LeadRecord {
-  id: string;
-  type: RequestType;
-  createdAt: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  service: string | null;
-  serviceLabel: string | null;
-  slotId: string | null;
-  slotTitle: string | null;
-  slotDate: string | null;
-  comment: string;
-  status: "new";
-}
-
 const isFilled = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
 const isConsented = (v: unknown) => v === true || v === "on" || v === "true";
 
-/** Persist the lead to data/bookings.json (best-effort, skipped on read-only FS). */
-async function persist(record: LeadRecord) {
+/** Persist to data/bookings.json — fallback when no DB is configured. */
+async function persistToFile(record: Record<string, unknown>) {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     const file = path.join(DATA_DIR, "bookings.json");
-
     let existing: unknown[] = [];
     try {
       existing = JSON.parse(await fs.readFile(file, "utf-8")) as unknown[];
     } catch {
       existing = [];
     }
-
     existing.push(record);
     await fs.writeFile(file, JSON.stringify(existing, null, 2), "utf-8");
   } catch (err) {
-    // On serverless/read-only filesystems persistence may fail — notifications
-    // are the source of truth there, so we only log and continue.
-    console.error("[booking] persist failed:", err);
+    console.error("[booking] file persist failed:", err);
   }
 }
 
+interface NotifyRecord {
+  type: RequestType;
+  name: string;
+  phone: string;
+  email: string | null;
+  serviceLabel: string | null;
+  slotTitle: string | null;
+  slotDate: string | null;
+  comment: string;
+}
+
 /** Send notifications via Telegram bot and/or a generic webhook (if configured). */
-async function notify(record: LeadRecord) {
+async function notify(record: NotifyRecord) {
   const tasks: Promise<unknown>[] = [];
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -111,7 +104,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as RequestPayload;
     const type: RequestType = body.type === "callback" ? "callback" : "booking";
 
-    // Common required fields
     if (!isFilled(body.name) || !isFilled(body.phone)) {
       return NextResponse.json({ error: "Укажите имя и телефон" }, { status: 400 });
     }
@@ -121,8 +113,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
-    // Booking-specific validation
     if (type === "booking") {
       if (!isFilled(body.email)) {
         return NextResponse.json({ error: "Укажите email" }, { status: 400 });
@@ -132,17 +122,18 @@ export async function POST(request: Request) {
       }
     }
 
+    // Resolve slot/direction (from DB when available, else static seed data).
     const slot = isFilled(body.slotId)
-      ? UPCOMING_SLOTS.find((s) => s.id === body.slotId)
-      : undefined;
+      ? hasDb()
+        ? await getSlotById(body.slotId)
+        : (UPCOMING_SLOTS.find((s) => s.id === body.slotId) ?? null)
+      : null;
     const direction = isFilled(body.service)
       ? DIRECTION_OPTIONS.find((o) => o.value === body.service)
       : undefined;
 
-    const record: LeadRecord = {
-      id: `${type}-${Date.now()}`,
+    const input: BookingInput = {
       type,
-      createdAt: new Date().toISOString(),
       name: body.name.trim(),
       phone: body.phone.trim(),
       email: isFilled(body.email) ? body.email.trim() : null,
@@ -156,13 +147,31 @@ export async function POST(request: Request) {
         : type === "callback"
           ? "Запрос обратного звонка"
           : "",
-      status: "new",
     };
 
-    await persist(record);
-    await notify(record);
+    if (hasDb()) {
+      await createBooking(input);
+    } else {
+      await persistToFile({
+        id: `${type}-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        status: "new",
+        ...input,
+      });
+    }
 
-    return NextResponse.json({ ok: true, id: record.id });
+    await notify({
+      type: input.type,
+      name: input.name,
+      phone: input.phone,
+      email: input.email,
+      serviceLabel: input.serviceLabel,
+      slotTitle: input.slotTitle,
+      slotDate: input.slotDate,
+      comment: input.comment,
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[booking] error:", err);
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });

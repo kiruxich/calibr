@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DIRECTION_OPTIONS, PRICE_SERVICES } from "@/lib/data/prices";
-import { UPCOMING_SLOTS } from "@/lib/data/schedule";
+import type { ScheduleSlot } from "@/lib/data/schedule";
 import { maskPhone } from "@/lib/utils";
 
 export interface BookingFormProps {
@@ -22,28 +22,46 @@ export function BookingForm({
   const [service, setService] = useState(defaultService);
   const [slotId, setSlotId] = useState(defaultSlotId);
   const [comment, setComment] = useState("");
+  const [slots, setSlots] = useState<ScheduleSlot[]>([]);
 
-  // Prefill from query params (e.g. links from /raspisanie, /uslugi, calculator):
-  // ?service=<direction>&slot=<slotId>&program=<priceServiceId>
+  // Prefill service/program from query params (independent of slot data):
+  // ?service=<direction>&program=<priceServiceId>
   // Read from window so the contacts page can stay statically rendered.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
 
     const qsService = params.get("service");
-    const qsSlot = params.get("slot") ?? params.get("slotId");
     const qsProgram = params.get("program");
 
     if (qsService && DIRECTION_OPTIONS.some((o) => o.value === qsService)) {
       setService(qsService);
     }
-    if (qsSlot && UPCOMING_SLOTS.some((s) => s.id === qsSlot)) {
-      setSlotId(qsSlot);
-    }
     if (qsProgram) {
       const program = PRICE_SERVICES.find((p) => p.id === qsProgram);
       if (program) setComment(`Интересует программа: ${program.name}`);
     }
+  }, []);
+
+  // Load available slots from the API (DB-backed, falls back to seed data),
+  // then apply the ?slot=<id> prefill once we know which slots exist.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/slots")
+      .then((r) => r.json())
+      .then((data: { slots?: ScheduleSlot[] }) => {
+        if (!active) return;
+        const list = data.slots ?? [];
+        setSlots(list);
+        const qsSlot =
+          new URLSearchParams(window.location.search).get("slot") ??
+          new URLSearchParams(window.location.search).get("slotId");
+        if (qsSlot && list.some((s) => s.id === qsSlot)) setSlotId(qsSlot);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -128,7 +146,7 @@ export function BookingForm({
             className="input-field"
           >
             <option value="">Выберите слот</option>
-            {UPCOMING_SLOTS.map((s) => (
+            {slots.map((s) => (
               <option key={s.id} value={s.id}>
                 {new Date(s.date).toLocaleDateString("ru-RU")} {s.time} — {s.title}
                 {s.spotsLeft <= 3 ? ` (осталось ${s.spotsLeft})` : ""}

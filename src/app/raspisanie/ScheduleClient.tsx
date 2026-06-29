@@ -3,20 +3,26 @@
 import { useState } from "react";
 import {
   DIRECTION_LABELS,
-  UPCOMING_SLOTS,
-  WEEKLY_SCHEDULE,
   type ScheduleDirection,
+  type ScheduleSlot,
 } from "@/lib/data/schedule";
+import type { WeeklyRow } from "@/db/queries";
 import { BookingCalendar } from "@/components/booking/BookingCalendar";
 
-export default function ScheduleClient() {
+export default function ScheduleClient({
+  slots,
+  weekly,
+}: {
+  slots: ScheduleSlot[];
+  weekly: WeeklyRow[];
+}) {
   const [filter, setFilter] = useState<ScheduleDirection | "all">("all");
 
   const filteredWeekly =
-    filter === "all" ? WEEKLY_SCHEDULE : WEEKLY_SCHEDULE.filter((r) => r.direction === filter);
+    filter === "all" ? weekly : weekly.filter((r) => r.direction === filter);
 
   const filteredSlots =
-    filter === "all" ? UPCOMING_SLOTS : UPCOMING_SLOTS.filter((s) => s.direction === filter);
+    filter === "all" ? slots : slots.filter((s) => s.direction === filter);
 
   return (
     <>

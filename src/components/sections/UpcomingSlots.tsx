@@ -1,8 +1,28 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Calendar, ChevronRight } from "lucide-react";
-import { UPCOMING_SLOTS, DIRECTION_LABELS } from "@/lib/data/schedule";
+import { DIRECTION_LABELS, type ScheduleSlot } from "@/lib/data/schedule";
 
 export function UpcomingSlots() {
+  const [slots, setSlots] = useState<ScheduleSlot[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/slots")
+      .then((r) => r.json())
+      .then((data: { slots?: ScheduleSlot[] }) => {
+        if (active) setSlots(data.slots ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (slots.length === 0) return null;
+
   return (
     <section className="border-b border-[var(--border)] py-20 sm:py-28">
       <div className="container-page">
@@ -19,7 +39,7 @@ export function UpcomingSlots() {
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {UPCOMING_SLOTS.slice(0, 6).map((slot) => (
+          {slots.slice(0, 6).map((slot) => (
             <div key={slot.id} className="card-premium card-glow group flex flex-col justify-between">
               <div>
                 <p className="text-xs font-normal uppercase tracking-wider text-[var(--accent)]">

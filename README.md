@@ -203,6 +203,49 @@ src/
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | Уведомления о заявках в Telegram |
 | `BOOKING_WEBHOOK_URL` | POST JSON заявки во внешний сервис (CRM, Make, n8n) |
 | `NEXT_PUBLIC_YM_ID` | ID счётчика Яндекс.Метрики (грузится только после согласия) |
+| `DATABASE_URL` | PostgreSQL (Neon). Без неё — демо-данные, админка read-only |
+| `ADMIN_PASSWORD` | Пароль входа в админку `/admin` |
+| `ADMIN_SESSION_SECRET` | Секрет для подписи cookie-сессии админки |
+
+## База данных и админка расписания
+
+Расписание, недельная сетка и заявки хранятся в PostgreSQL (Neon) через
+**Drizzle ORM**. Без `DATABASE_URL` сайт продолжает работать на демо-данных
+(`src/lib/data/schedule.ts`), а админка доступна только для чтения — это
+безопасный фолбэк для первого деплоя.
+
+### Структура
+
+- `src/db/schema.ts` — таблицы `schedule_slots`, `weekly_schedule`, `bookings`.
+- `src/db/index.ts` — ленивый клиент `getDb()` (безопасен на этапе сборки).
+- `src/db/queries.ts` — чтение/запись + фолбэк на демо-данные.
+- `drizzle/` — сгенерированные миграции.
+- `scripts/seed.ts` — наполнение БД начальными данными.
+
+### Первичная настройка (Neon через Vercel)
+
+1. Установите интеграцию Neon в Vercel Marketplace — `DATABASE_URL` пропишется
+   в проекте автоматически (`vercel integration add neon`).
+2. Подтяните переменные локально: `vercel env pull .env.local`.
+3. Создайте таблицы: `npm run db:push`.
+4. Залейте начальные данные: `npm run db:seed`.
+
+Команды БД (используют `.env.local` через `dotenv-cli`):
+
+```bash
+npm run db:generate   # сгенерировать SQL-миграции из схемы
+npm run db:push       # применить схему к БД
+npm run db:seed       # залить начальное расписание
+npm run db:studio     # GUI Drizzle Studio
+```
+
+### Админка `/admin`
+
+- Вход по паролю (`ADMIN_PASSWORD`), сессия — подписанная httpOnly-cookie.
+  Доступ защищён `src/proxy.ts` (в Next.js 16 middleware называется **proxy**).
+- Разделы: слоты записи (CRUD), недельная сетка (CRUD), список заявок.
+- Изменения сразу отражаются на сайте (`revalidatePath` для `/`, `/raspisanie`).
+- Заявки с привязкой к слоту автоматически уменьшают число свободных мест.
 
 ---
 
