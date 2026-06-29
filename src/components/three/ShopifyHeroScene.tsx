@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/three/patch-clock";
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
