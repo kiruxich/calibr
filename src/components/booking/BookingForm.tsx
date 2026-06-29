@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { DIRECTION_OPTIONS } from "@/lib/data/prices";
+import { useEffect, useState } from "react";
+import { DIRECTION_OPTIONS, PRICE_SERVICES } from "@/lib/data/prices";
 import { UPCOMING_SLOTS } from "@/lib/data/schedule";
 import { maskPhone } from "@/lib/utils";
 
@@ -19,6 +19,32 @@ export function BookingForm({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
+  const [service, setService] = useState(defaultService);
+  const [slotId, setSlotId] = useState(defaultSlotId);
+  const [comment, setComment] = useState("");
+
+  // Prefill from query params (e.g. links from /raspisanie, /uslugi, calculator):
+  // ?service=<direction>&slot=<slotId>&program=<priceServiceId>
+  // Read from window so the contacts page can stay statically rendered.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+
+    const qsService = params.get("service");
+    const qsSlot = params.get("slot") ?? params.get("slotId");
+    const qsProgram = params.get("program");
+
+    if (qsService && DIRECTION_OPTIONS.some((o) => o.value === qsService)) {
+      setService(qsService);
+    }
+    if (qsSlot && UPCOMING_SLOTS.some((s) => s.id === qsSlot)) {
+      setSlotId(qsSlot);
+    }
+    if (qsProgram) {
+      const program = PRICE_SERVICES.find((p) => p.id === qsProgram);
+      if (program) setComment(`Интересует программа: ${program.name}`);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,13 +56,15 @@ export function BookingForm({
       const res = await fetch("/api/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, type: "booking" }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Ошибка отправки");
       setStatus("success");
       setMessage("Заявка принята! Мы свяжемся с вами для подтверждения записи.");
       form.reset();
+      setPhone("");
+      setComment("");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Не удалось отправить заявку");
@@ -75,7 +103,13 @@ export function BookingForm({
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-medium">Направление *</span>
-          <select name="service" required defaultValue={defaultService} className="input-field">
+          <select
+            name="service"
+            required
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="input-field"
+          >
             <option value="">Выберите направление</option>
             {DIRECTION_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -86,7 +120,13 @@ export function BookingForm({
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-medium">Дата и время *</span>
-          <select name="slotId" required defaultValue={defaultSlotId} className="input-field">
+          <select
+            name="slotId"
+            required
+            value={slotId}
+            onChange={(e) => setSlotId(e.target.value)}
+            className="input-field"
+          >
             <option value="">Выберите слот</option>
             {UPCOMING_SLOTS.map((s) => (
               <option key={s.id} value={s.id}>
@@ -98,7 +138,14 @@ export function BookingForm({
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-1 block text-sm font-medium">Комментарий</span>
-          <textarea name="comment" rows={3} className="input-field" placeholder="Дополнительная информация" />
+          <textarea
+            name="comment"
+            rows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="input-field"
+            placeholder="Дополнительная информация"
+          />
         </label>
         <label className="flex items-start gap-2 sm:col-span-2">
           <input name="consent" type="checkbox" required className="mt-1" />

@@ -26,6 +26,8 @@ export function CookieBanner() {
     } catch {
       /* ignore */
     }
+    // Let analytics react instantly (load on accept) without a reload.
+    window.dispatchEvent(new CustomEvent("calibr-consent", { detail: value }));
     setVisible(false);
   };
 

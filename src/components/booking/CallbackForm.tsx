@@ -4,27 +4,29 @@ import { useState } from "react";
 import { maskPhone } from "@/lib/utils";
 
 export function CallbackForm() {
-  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [phone, setPhone] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
     const fd = new FormData(e.currentTarget);
-    await fetch("/api/booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: fd.get("name"),
-        phone: fd.get("phone"),
-        email: "callback@local",
-        service: "callback",
-        slotId: "callback",
-        comment: "Запрос обратного звонка",
-        consent: "on",
-      }),
-    });
-    setStatus("done");
+    try {
+      const res = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "callback",
+          name: fd.get("name"),
+          phone: fd.get("phone"),
+          consent: fd.get("consent") ? "on" : "",
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("done");
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -65,6 +67,11 @@ export function CallbackForm() {
           <button type="submit" disabled={status === "loading"} className="btn-primary w-full">
             {status === "loading" ? "Отправка…" : "Жду звонка"}
           </button>
+          {status === "error" && (
+            <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">
+              Не удалось отправить. Попробуйте позвонить нам напрямую.
+            </p>
+          )}
         </>
       )}
     </form>
