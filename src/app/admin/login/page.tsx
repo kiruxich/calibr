@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FieldLabel, TextInput } from "@/components/ui/form";
 import { loginAction } from "../actions";
 
 export const metadata: Metadata = {
@@ -41,17 +42,15 @@ export default async function AdminLoginPage({
 
         <form action={loginAction} className="space-y-4">
           <input type="hidden" name="from" value={from ?? "/admin"} />
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Пароль</span>
-            <input
+          <FieldLabel label="Пароль" required>
+            <TextInput
               name="password"
               type="password"
               required
               autoFocus
-              className="input-field"
               placeholder="••••••••"
             />
-          </label>
+          </FieldLabel>
           <button type="submit" disabled={!hasPassword} className="btn-primary w-full">
             Войти
           </button>

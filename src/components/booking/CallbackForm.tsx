@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { maskPhone } from "@/lib/utils";
+import { Checkbox, FieldLabel, PhoneInput, TextInput } from "@/components/ui/form";
 
 export function CallbackForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -38,32 +38,18 @@ export function CallbackForm() {
         </p>
       ) : (
         <>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Имя</span>
-            <input name="name" className="input-field" required />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Телефон</span>
-            <input
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              className="input-field"
-              required
-              value={phone}
-              onChange={(e) => setPhone(maskPhone(e.target.value))}
-              placeholder="+7 (___) ___-__-__"
-            />
-          </label>
-          <label className="flex items-start gap-2">
-            <input name="consent" type="checkbox" required className="mt-1" />
-            <span className="text-sm text-[var(--text-secondary)]">
-              Согласен на{" "}
-              <a href="/privacy" className="text-[var(--accent)] underline">
-                обработку персональных данных
-              </a>
-            </span>
-          </label>
+          <FieldLabel label="Имя" required>
+            <TextInput name="name" required />
+          </FieldLabel>
+          <FieldLabel label="Телефон" required>
+            <PhoneInput name="phone" required value={phone} onChange={setPhone} />
+          </FieldLabel>
+          <Checkbox name="consent" required>
+            Согласен на{" "}
+            <a href="/privacy" className="text-[var(--accent)] underline">
+              обработку персональных данных
+            </a>
+          </Checkbox>
           <button type="submit" disabled={status === "loading"} className="btn-primary w-full">
             {status === "loading" ? "Отправка…" : "Жду звонка"}
           </button>

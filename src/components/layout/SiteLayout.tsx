@@ -4,9 +4,11 @@ import { FloatingContact } from "@/components/layout/FloatingContact";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import { Analytics } from "@/components/analytics/Analytics";
 import { A11yProvider } from "@/components/a11y/A11yProvider";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
+    <ThemeProvider>
     <A11yProvider>
       <div className="bg-fx" aria-hidden>
         <div className="bg-fx__blob bg-fx__blob--gold" />
@@ -21,5 +23,6 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
       <Analytics />
       <div className="bg-grain" aria-hidden />
     </A11yProvider>
+    </ThemeProvider>
   );
 }

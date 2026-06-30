@@ -101,7 +101,7 @@ export function BookingCalendar({ slots }: { slots: ScheduleSlot[] }) {
                 onClick={() => setSelected(iso)}
                 className={cn(
                   "relative flex h-10 items-center justify-center rounded-lg text-sm transition",
-                  isSelected && "bg-[var(--accent)] font-semibold text-[#1a1206]",
+                  isSelected && "bg-[var(--accent)] font-semibold text-[var(--accent-foreground)]",
                   !isSelected && has && !isPast && "bg-[var(--bg-elevated)] text-white hover:bg-[var(--surface-hover)]",
                   !has && "text-[var(--text-muted)]",
                   isPast && "opacity-40",

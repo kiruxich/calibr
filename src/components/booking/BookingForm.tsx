@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import { DIRECTION_OPTIONS, PRICE_SERVICES } from "@/lib/data/prices";
 import type { ScheduleSlot } from "@/lib/data/schedule";
-import { maskPhone } from "@/lib/utils";
+import {
+  Checkbox,
+  FieldLabel,
+  PhoneInput,
+  Select,
+  TextArea,
+  TextInput,
+} from "@/components/ui/form";
 
 export interface BookingFormProps {
   defaultService?: string;
@@ -24,9 +31,6 @@ export function BookingForm({
   const [comment, setComment] = useState("");
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
 
-  // Prefill service/program from query params (independent of slot data):
-  // ?service=<direction>&program=<priceServiceId>
-  // Read from window so the contacts page can stay statically rendered.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -43,8 +47,6 @@ export function BookingForm({
     }
   }, []);
 
-  // Load available slots from the API (DB-backed, falls back to seed data),
-  // then apply the ?slot=<id> prefill once we know which slots exist.
   useEffect(() => {
     let active = true;
     fetch("/api/slots")
@@ -82,12 +84,26 @@ export function BookingForm({
       setMessage("Заявка принята! Мы свяжемся с вами для подтверждения записи.");
       form.reset();
       setPhone("");
+      setService("");
+      setSlotId("");
       setComment("");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Не удалось отправить заявку");
     }
   }
+
+  const slotOptions = slots.map((s) => ({
+    value: s.id,
+    label: `${new Date(s.date).toLocaleDateString("ru-RU")} ${s.time} — ${s.title}${
+      s.spotsLeft <= 3 ? ` (осталось ${s.spotsLeft})` : ""
+    }`,
+  }));
+
+  const directionOptions = DIRECTION_OPTIONS.map((o) => ({
+    value: o.value,
+    label: o.label,
+  }));
 
   return (
     <form
@@ -98,82 +114,62 @@ export function BookingForm({
       {!compact && <h3 className="text-xl font-bold">Онлайн-запись</h3>}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium">ФИО *</span>
-          <input name="name" required className="input-field" placeholder="Иванов Иван Иванович" />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Телефон *</span>
-          <input
-            name="phone"
-            type="tel"
-            inputMode="tel"
+        <FieldLabel label="ФИО" required className="sm:col-span-2">
+          <TextInput name="name" required placeholder="Иванов Иван Иванович" />
+        </FieldLabel>
+
+        <FieldLabel label="Телефон" required>
+          <PhoneInput name="phone" required value={phone} onChange={setPhone} />
+        </FieldLabel>
+
+        <FieldLabel label="Email" required>
+          <TextInput
+            name="email"
+            type="email"
+            autoComplete="email"
             required
-            value={phone}
-            onChange={(e) => setPhone(maskPhone(e.target.value))}
-            className="input-field"
-            placeholder="+7 (___) ___-__-__"
+            placeholder="email@example.com"
           />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Email *</span>
-          <input name="email" type="email" required className="input-field" placeholder="email@example.com" />
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium">Направление *</span>
-          <select
+        </FieldLabel>
+
+        <FieldLabel label="Направление" required className="sm:col-span-2">
+          <Select
             name="service"
-            required
             value={service}
-            onChange={(e) => setService(e.target.value)}
-            className="input-field"
-          >
-            <option value="">Выберите направление</option>
-            {DIRECTION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium">Дата и время *</span>
-          <select
-            name="slotId"
+            onChange={setService}
+            options={directionOptions}
+            placeholder="Выберите направление"
             required
+          />
+        </FieldLabel>
+
+        <FieldLabel label="Дата и время" required className="sm:col-span-2">
+          <Select
+            name="slotId"
             value={slotId}
-            onChange={(e) => setSlotId(e.target.value)}
-            className="input-field"
-          >
-            <option value="">Выберите слот</option>
-            {slots.map((s) => (
-              <option key={s.id} value={s.id}>
-                {new Date(s.date).toLocaleDateString("ru-RU")} {s.time} — {s.title}
-                {s.spotsLeft <= 3 ? ` (осталось ${s.spotsLeft})` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium">Комментарий</span>
-          <textarea
+            onChange={setSlotId}
+            options={slotOptions}
+            placeholder="Выберите слот"
+            required
+          />
+        </FieldLabel>
+
+        <FieldLabel label="Комментарий" className="sm:col-span-2">
+          <TextArea
             name="comment"
             rows={3}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="input-field"
             placeholder="Дополнительная информация"
           />
-        </label>
-        <label className="flex items-start gap-2 sm:col-span-2">
-          <input name="consent" type="checkbox" required className="mt-1" />
-          <span className="text-sm text-[var(--foreground)]/80">
-            Согласен на{" "}
-            <a href="/privacy" className="text-[var(--accent)] underline">
-              обработку персональных данных
-            </a>
-          </span>
-        </label>
+        </FieldLabel>
+
+        <Checkbox name="consent" required className="sm:col-span-2">
+          Согласен на{" "}
+          <a href="/privacy" className="text-[var(--accent)] underline">
+            обработку персональных данных
+          </a>
+        </Checkbox>
       </div>
 
       <button type="submit" disabled={status === "loading"} className="btn-primary w-full sm:w-auto">
@@ -181,10 +177,14 @@ export function BookingForm({
       </button>
 
       {status === "success" && (
-        <p className="rounded-lg border border-[var(--success)]/40 bg-[var(--success)]/10 p-3 text-sm text-[var(--success)]">{message}</p>
+        <p className="rounded-lg border border-[var(--success)]/40 bg-[var(--success)]/10 p-3 text-sm text-[var(--success)]">
+          {message}
+        </p>
       )}
       {status === "error" && (
-        <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">{message}</p>
+        <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">
+          {message}
+        </p>
       )}
     </form>
   );

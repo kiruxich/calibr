@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Premium dark palette — high readability ── */
+  /* ── Theme 1: Premium dark (gold) — default ── */
   --bg: #050608;
   --bg-elevated: #0d0e12;
   --surface: #14151a;
@@ -15,11 +15,36 @@
   --accent-hover: #f2c069;
   --accent-muted: rgba(224, 170, 78, 0.14);
   --accent-glow: rgba(224, 170, 78, 0.4);
+  --accent-foreground: #1a1206;
+  --fx-blob-1: rgba(224, 170, 78, 0.22);
+  --fx-blob-2: rgba(60, 110, 220, 0.16);
+  --fx-blob-3: rgba(224, 170, 78, 0.08);
   --success: #5cd85c;
   --error: #ff6363;
   --background: var(--bg);
   --foreground: var(--text);
   --muted: var(--surface);
+}
+
+/* ── Theme 2: Deep blue (по ТЗ — синий сайт, тёмно-синие/голубые кнопки) ── */
+:root[data-theme="blue"] {
+  --bg: #060b18;
+  --bg-elevated: #0b1426;
+  --surface: #101d34;
+  --surface-hover: #16263f;
+  --border: #20335a;
+  --border-light: #2d4a7a;
+  --text: #ffffff;
+  --text-secondary: #c6d3e8;
+  --text-muted: #8294b4;
+  --accent: #3d7bff;
+  --accent-hover: #5b91ff;
+  --accent-muted: rgba(61, 123, 255, 0.16);
+  --accent-glow: rgba(61, 123, 255, 0.45);
+  --accent-foreground: #ffffff;
+  --fx-blob-1: rgba(61, 123, 255, 0.26);
+  --fx-blob-2: rgba(37, 99, 235, 0.2);
+  --fx-blob-3: rgba(61, 123, 255, 0.1);
 }
 
 @theme inline {
@@ -51,11 +76,71 @@ h1, h2, h3, h4 {
   color: #fff;
 }
 
-html.a11y { font-size: 115%; }
-html.a11y-high-contrast {
-  --bg: #000; --bg-elevated: #000; --surface: #0a0a0a;
-  --text: #fff; --text-secondary: #fff; --text-muted: #d0d0d0;
-  --accent: #ffd400; --border: #ffffff; --border-light: #ffffff;
+/* ── Версия для слабовидящих ── */
+html.vi-fs-large { font-size: 118%; }
+html.vi-fs-xlarge { font-size: 138%; }
+
+html.vi-spacing-wide,
+html.vi-spacing-wide p,
+html.vi-spacing-wide span,
+html.vi-spacing-wide a,
+html.vi-spacing-wide li,
+html.vi-spacing-wide h1,
+html.vi-spacing-wide h2,
+html.vi-spacing-wide h3,
+html.vi-spacing-wide h4 {
+  letter-spacing: 0.08em;
+  word-spacing: 0.16em;
+  line-height: 1.9;
+}
+
+html.vi-font-readable,
+html.vi-font-readable body,
+html.vi-font-readable h1,
+html.vi-font-readable h2,
+html.vi-font-readable h3,
+html.vi-font-readable h4 {
+  font-family: Arial, "Helvetica Neue", system-ui, sans-serif !important;
+  letter-spacing: 0;
+}
+
+/* Скрыть декоративную графику и тяжёлую 3D-сцену */
+html.vi-images-off img,
+html.vi-images-off video,
+html.vi-images-off canvas,
+html.vi-images-off iframe,
+html.vi-images-off .bg-fx,
+html.vi-images-off .bg-grain {
+  display: none !important;
+}
+
+/* Цветовые схемы (переопределяют активную тему) */
+:root.vi-scheme-wb {
+  --bg: #ffffff; --bg-elevated: #ffffff; --surface: #f2f2f2; --surface-hover: #e6e6e6;
+  --text: #000000; --text-secondary: #111111; --text-muted: #333333;
+  --accent: #00309e; --accent-hover: #0040c8; --accent-foreground: #ffffff;
+  --accent-muted: rgba(0, 48, 158, 0.12); --accent-glow: transparent;
+  --border: #000000; --border-light: #555555;
+}
+:root.vi-scheme-bw {
+  --bg: #000000; --bg-elevated: #000000; --surface: #0a0a0a; --surface-hover: #161616;
+  --text: #ffffff; --text-secondary: #ffffff; --text-muted: #d0d0d0;
+  --accent: #ffd400; --accent-hover: #ffe34d; --accent-foreground: #000000;
+  --accent-muted: rgba(255, 212, 0, 0.15); --accent-glow: transparent;
+  --border: #ffffff; --border-light: #ffffff;
+}
+:root.vi-scheme-blue {
+  --bg: #9dd1ff; --bg-elevated: #9dd1ff; --surface: #bfe0ff; --surface-hover: #a8d4ff;
+  --text: #063462; --text-secondary: #063462; --text-muted: #0a4a87;
+  --accent: #063462; --accent-hover: #0a4a87; --accent-foreground: #9dd1ff;
+  --accent-muted: rgba(6, 52, 98, 0.12); --accent-glow: transparent;
+  --border: #063462; --border-light: #1d5a96;
+}
+html[class*="vi-scheme-"] h1,
+html[class*="vi-scheme-"] h2,
+html[class*="vi-scheme-"] h3,
+html[class*="vi-scheme-"] h4 {
+  color: var(--text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -120,7 +205,7 @@ html.a11y-high-contrast {
 
 /* ── Buttons (high contrast) ── */
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-xl bg-[var(--accent)] px-7 py-3.5 text-base font-semibold text-[#1a1206] transition-all duration-300;
+  @apply inline-flex items-center justify-center rounded-xl bg-[var(--accent)] px-7 py-3.5 text-base font-semibold text-[var(--accent-foreground)] transition-all duration-300;
   box-shadow: 0 0 28px var(--accent-glow);
 }
 .btn-primary:hover {
@@ -135,6 +220,44 @@ html.a11y-high-contrast {
 /* ── Forms ── */
 .input-field {
   @apply w-full rounded-xl border border-[var(--border-light)] bg-[var(--bg-elevated)] px-4 py-3 text-base text-white outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/30;
+}
+
+/* ── Custom form controls ── */
+.field-segments {
+  @apply flex items-center gap-0.5 rounded-xl border border-[var(--border-light)] bg-[var(--bg-elevated)] px-3 py-2 transition focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent)]/30;
+}
+.field-segment {
+  @apply w-7 border-0 bg-transparent p-0 text-center text-sm text-white outline-none placeholder:text-[var(--text-muted)];
+}
+.field-segment--wide {
+  @apply w-11;
+}
+.field-segment-sep {
+  @apply select-none text-[var(--text-muted)];
+}
+.field-number {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.field-number::-webkit-outer-spin-button,
+.field-number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.field-select {
+  @apply relative;
+}
+.field-select-trigger {
+  @apply flex items-center justify-between gap-2;
+}
+.field-select-menu {
+  @apply absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-y-auto rounded-xl border border-[var(--border-light)] bg-[var(--surface)] py-1 shadow-xl;
+}
+.field-select-option {
+  @apply flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm text-white transition hover:bg-[var(--surface-hover)];
+}
+.field-select-option--active {
+  @apply bg-[var(--accent-muted)] text-[var(--accent)];
 }
 
 .prose-content {
@@ -190,7 +313,7 @@ html.a11y-high-contrast {
   right: -5%;
   width: 50vw;
   height: 50vw;
-  background: radial-gradient(circle, rgba(224, 170, 78, 0.22), transparent 70%);
+  background: radial-gradient(circle, var(--fx-blob-1), transparent 70%);
   animation: fx-float-a 22s ease-in-out infinite;
 }
 .bg-fx__blob--blue {
@@ -198,7 +321,7 @@ html.a11y-high-contrast {
   left: -10%;
   width: 55vw;
   height: 55vw;
-  background: radial-gradient(circle, rgba(80, 120, 220, 0.12), transparent 70%);
+  background: radial-gradient(circle, var(--fx-blob-2), transparent 70%);
   animation: fx-float-b 28s ease-in-out infinite;
 }
 .bg-fx__blob--center {
@@ -206,7 +329,7 @@ html.a11y-high-contrast {
   left: 35%;
   width: 40vw;
   height: 40vw;
-  background: radial-gradient(circle, rgba(224, 170, 78, 0.08), transparent 70%);
+  background: radial-gradient(circle, var(--fx-blob-3), transparent 70%);
   animation: fx-float-a 32s ease-in-out infinite reverse;
 }
 @keyframes fx-float-a {

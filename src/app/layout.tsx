@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Unbounded } from "next/font/google";
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { ThemeScript } from "@/components/theme/ThemeProvider";
 import { SITE } from "@/lib/data/site";
 import "./globals.css";
 
@@ -80,8 +81,12 @@ export default function RootLayout({
     <html
       lang="ru"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${manrope.variable} ${unbounded.variable} h-full`}
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="flex min-h-full flex-col bg-[var(--bg)] text-[var(--text)]">
         <SiteLayout>{children}</SiteLayout>
       </body>

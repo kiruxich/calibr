@@ -50,7 +50,7 @@ export function FloatingContact() {
             className="flex items-center gap-2 rounded-full border border-[var(--border-light)] bg-[var(--surface)] py-2.5 pl-4 pr-2.5 text-sm font-medium text-white shadow-lg transition hover:border-[var(--accent)]"
           >
             Позвонить
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1206]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)]">
               <Phone className="h-4 w-4" />
             </span>
           </a>
@@ -61,7 +61,7 @@ export function FloatingContact() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Закрыть контакты" : "Связаться с нами"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1206] shadow-xl transition hover:bg-[var(--accent-hover)]"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] shadow-xl transition hover:bg-[var(--accent-hover)]"
         style={{ boxShadow: "0 0 30px var(--accent-glow)" }}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}

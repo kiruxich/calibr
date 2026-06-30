@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { NAV, SITE } from "@/lib/data/site";
 import { A11yToggle } from "@/components/a11y/A11yProvider";
+import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 export function Header() {
@@ -43,6 +44,7 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
+            <ThemeToggle />
             <A11yToggle />
             <Link href="/kontakty#zapis" className="btn-primary px-5 py-2.5 text-sm">
               Записаться
@@ -63,7 +65,8 @@ export function Header() {
       {open && (
         <div className="container-page mt-2 lg:hidden">
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex items-center justify-end gap-2">
+              <ThemeToggle />
               <A11yToggle />
             </div>
             <nav className="flex flex-col gap-1">

@@ -135,7 +135,7 @@ export function PriceCalculator() {
                         active ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border-light)]",
                       )}
                     >
-                      {active && <Check className="h-3 w-3 text-[#1a1206]" strokeWidth={3} />}
+                      {active && <Check className="h-3 w-3 text-[var(--accent-foreground)]" strokeWidth={3} />}
                     </span>
                     <span className="text-sm font-medium text-white">{s.name}</span>
                   </span>
@@ -200,7 +200,7 @@ export function PriceCalculator() {
                         active ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border-light)]",
                       )}
                     >
-                      {active && <Check className="h-3 w-3 text-[#1a1206]" strokeWidth={3} />}
+                      {active && <Check className="h-3 w-3 text-[var(--accent-foreground)]" strokeWidth={3} />}
                     </span>
                     {e.name}
                   </span>

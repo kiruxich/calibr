@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { hasDb } from "@/db";
 import { getAllSlots, getWeeklySchedule, getBookings } from "@/db/queries";
-import { DIRECTION_LABELS, type ScheduleDirection } from "@/lib/data/schedule";
+import {
+  DateInput,
+  DirectionSelect,
+  NumberInput,
+  TextInput,
+  TimeInput,
+} from "@/components/ui/form";
 import {
   createSlotAction,
   updateSlotAction,
@@ -18,20 +24,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const DIRECTIONS = Object.keys(DIRECTION_LABELS) as ScheduleDirection[];
-
-function DirectionSelect({ name, value }: { name: string; value?: string }) {
-  return (
-    <select name={name} defaultValue={value ?? ""} required className="input-field">
-      {DIRECTIONS.map((d) => (
-        <option key={d} value={d}>
-          {DIRECTION_LABELS[d]}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 export default async function AdminDashboard() {
   const dbReady = hasDb();
@@ -73,13 +65,13 @@ export default async function AdminDashboard() {
           action={createSlotAction}
           className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-7"
         >
-          <input name="date" type="date" required className="input-field" />
-          <input name="time" type="time" required className="input-field" />
-          <input name="title" placeholder="Название" required className="input-field sm:col-span-2" />
+          <DateInput name="date" required />
+          <TimeInput name="time" required />
+          <TextInput name="title" placeholder="Название" required className="sm:col-span-2" />
           <DirectionSelect name="direction" />
-          <input name="spotsTotal" type="number" min={0} placeholder="Всего" required className="input-field" />
+          <NumberInput name="spotsTotal" min={0} placeholder="Всего" required />
           <div className="flex gap-2">
-            <input name="spotsLeft" type="number" min={0} placeholder="Своб." required className="input-field" />
+            <NumberInput name="spotsLeft" min={0} placeholder="Своб." required />
             <button type="submit" disabled={!dbReady} className="btn-primary shrink-0 px-3 text-sm">
               +
             </button>
@@ -105,29 +97,23 @@ export default async function AdminDashboard() {
                   <td className="p-2">
                     <form action={updateSlotAction} id={`slot-${s.id}`} className="contents">
                       <input type="hidden" name="id" value={s.id} />
-                      <input name="date" type="date" defaultValue={s.date} className="input-field" />
+                      <DateInput name="date" defaultValue={s.date} form={`slot-${s.id}`} />
                     </form>
                   </td>
                   <td className="p-2">
-                    <input form={`slot-${s.id}`} name="time" type="time" defaultValue={s.time} className="input-field" />
+                    <TimeInput form={`slot-${s.id}`} name="time" defaultValue={s.time} />
                   </td>
                   <td className="p-2">
-                    <input form={`slot-${s.id}`} name="title" defaultValue={s.title} className="input-field min-w-[160px]" />
+                    <TextInput form={`slot-${s.id}`} name="title" defaultValue={s.title} className="min-w-[160px]" />
                   </td>
                   <td className="p-2">
-                    <select form={`slot-${s.id}`} name="direction" defaultValue={s.direction} className="input-field">
-                      {DIRECTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {DIRECTION_LABELS[d]}
-                        </option>
-                      ))}
-                    </select>
+                    <DirectionSelect form={`slot-${s.id}`} name="direction" defaultValue={s.direction} />
                   </td>
                   <td className="p-2">
-                    <input form={`slot-${s.id}`} name="spotsTotal" type="number" min={0} defaultValue={s.spotsTotal} className="input-field w-20" />
+                    <NumberInput form={`slot-${s.id}`} name="spotsTotal" min={0} defaultValue={s.spotsTotal} className="w-20" />
                   </td>
                   <td className="p-2">
-                    <input form={`slot-${s.id}`} name="spotsLeft" type="number" min={0} defaultValue={s.spotsLeft} className="input-field w-20" />
+                    <NumberInput form={`slot-${s.id}`} name="spotsLeft" min={0} defaultValue={s.spotsLeft} className="w-20" />
                   </td>
                   <td className="p-2">
                     <div className="flex gap-2">
@@ -157,10 +143,10 @@ export default async function AdminDashboard() {
           action={createWeeklyAction}
           className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-6"
         >
-          <input name="position" type="number" min={0} placeholder="№" required className="input-field" />
-          <input name="day" placeholder="День" required className="input-field" />
-          <input name="time" placeholder="Время" required className="input-field" />
-          <input name="event" placeholder="Мероприятие" required className="input-field" />
+          <NumberInput name="position" min={0} placeholder="№" required className="w-20" />
+          <TextInput name="day" placeholder="День" required />
+          <TimeInput name="time" required />
+          <TextInput name="event" placeholder="Мероприятие" required />
           <DirectionSelect name="direction" />
           <button type="submit" disabled={!dbReady} className="btn-primary text-sm">
             Добавить
@@ -185,26 +171,20 @@ export default async function AdminDashboard() {
                   <td className="p-2">
                     <form action={updateWeeklyAction} id={`wk-${w.id}`} className="contents">
                       <input type="hidden" name="id" value={w.id ?? ""} />
-                      <input name="position" type="number" min={0} defaultValue={w.position} className="input-field w-16" />
+                      <NumberInput name="position" min={0} defaultValue={w.position} className="w-16" />
                     </form>
                   </td>
                   <td className="p-2">
-                    <input form={`wk-${w.id}`} name="day" defaultValue={w.day} className="input-field min-w-[120px]" />
+                    <TextInput form={`wk-${w.id}`} name="day" defaultValue={w.day} className="min-w-[120px]" />
                   </td>
                   <td className="p-2">
-                    <input form={`wk-${w.id}`} name="time" defaultValue={w.time} className="input-field" />
+                    <TimeInput form={`wk-${w.id}`} name="time" defaultValue={w.time} />
                   </td>
                   <td className="p-2">
-                    <input form={`wk-${w.id}`} name="event" defaultValue={w.event} className="input-field min-w-[200px]" />
+                    <TextInput form={`wk-${w.id}`} name="event" defaultValue={w.event} className="min-w-[200px]" />
                   </td>
                   <td className="p-2">
-                    <select form={`wk-${w.id}`} name="direction" defaultValue={w.direction} className="input-field">
-                      {DIRECTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {DIRECTION_LABELS[d]}
-                        </option>
-                      ))}
-                    </select>
+                    <DirectionSelect form={`wk-${w.id}`} name="direction" defaultValue={w.direction} />
                   </td>
                   <td className="p-2">
                     <div className="flex gap-2">

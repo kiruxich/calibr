@@ -126,7 +126,7 @@ export function PromoSection() {
                 <Gift className="h-6 w-6" />
               </span>
               <div>
-                <div className="mb-2 inline-block rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-semibold text-[#1a1206]">
+                <div className="mb-2 inline-block rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent-foreground)]">
                   {p.badge}
                 </div>
                 <h3 className="text-lg font-semibold text-white">{p.title}</h3>
