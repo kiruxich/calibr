@@ -1,6 +1,7 @@
-import { asc, desc, eq, gte, sql } from "drizzle-orm";
+import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { getDb, hasDb } from "./index";
-import { bookings, scheduleSlots, weeklySchedule } from "./schema";
+import { bookings, otpCodes, scheduleSlots, weeklySchedule } from "./schema";
+import { normalizePhone } from "@/lib/client-auth";
 import {
   generateUpcomingSlots,
   WEEKLY_SCHEDULE,
@@ -168,4 +169,66 @@ export async function getSlotById(id: string): Promise<ScheduleSlot | null> {
     .where(eq(scheduleSlots.id, id))
     .limit(1);
   return row ? toSlot(row) : null;
+}
+
+// ── Client cabinet ──
+
+/** All bookings/callbacks left from a given phone (newest first). */
+export async function getBookingsByPhone(phone: string) {
+  if (!hasDb()) return [];
+  const norm = normalizePhone(phone);
+  const rows = await getDb().select().from(bookings).orderBy(desc(bookings.createdAt));
+  // Phones are stored as the user typed them; match on normalised digits.
+  return rows.filter((b) => normalizePhone(b.phone) === norm);
+}
+
+/** Creates (or replaces) a one-time login code for a phone, valid 5 minutes. */
+export async function createOtp(phone: string, code: string) {
+  const db = getDb();
+  const norm = normalizePhone(phone);
+  await db.delete(otpCodes).where(eq(otpCodes.phone, norm));
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  await db.insert(otpCodes).values({ phone: norm, code, expiresAt });
+}
+
+type OtpResult = "ok" | "invalid" | "expired" | "too_many";
+
+/** Verifies a login code; consumes it on success. */
+export async function verifyOtp(phone: string, code: string): Promise<OtpResult> {
+  const db = getDb();
+  const norm = normalizePhone(phone);
+  const [row] = await db
+    .select()
+    .from(otpCodes)
+    .where(eq(otpCodes.phone, norm))
+    .orderBy(desc(otpCodes.createdAt))
+    .limit(1);
+
+  if (!row) return "invalid";
+  if (row.expiresAt.getTime() < Date.now()) {
+    await db.delete(otpCodes).where(eq(otpCodes.id, row.id));
+    return "expired";
+  }
+  if (row.attempts >= 5) {
+    await db.delete(otpCodes).where(eq(otpCodes.id, row.id));
+    return "too_many";
+  }
+  if (row.code !== code) {
+    await db
+      .update(otpCodes)
+      .set({ attempts: row.attempts + 1 })
+      .where(eq(otpCodes.id, row.id));
+    return "invalid";
+  }
+  await db.delete(otpCodes).where(eq(otpCodes.id, row.id));
+  return "ok";
+}
+
+/** Housekeeping: drop expired codes (best-effort). */
+export async function purgeExpiredOtp() {
+  if (!hasDb()) return;
+  await getDb()
+    .delete(otpCodes)
+    .where(lt(otpCodes.expiresAt, new Date()))
+    .catch(() => {});
 }

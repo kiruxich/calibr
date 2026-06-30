@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { NAV, SITE } from "@/lib/data/site";
 import { A11yToggle } from "@/components/a11y/A11yProvider";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
@@ -46,6 +46,14 @@ export function Header() {
           <div className="hidden items-center gap-3 md:flex">
             <ThemeToggle />
             <A11yToggle />
+            <Link
+              href="/cabinet"
+              aria-label="Личный кабинет"
+              title="Личный кабинет"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-light)] text-[var(--text-secondary)] transition hover:border-[var(--accent)] hover:text-white"
+            >
+              <User className="h-4 w-4" />
+            </Link>
             <Link href="/kontakty#zapis" className="btn-primary px-5 py-2.5 text-sm">
               Записаться
             </Link>
@@ -80,6 +88,13 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
+              <Link
+                href="/cabinet"
+                className="rounded-lg px-3 py-3 text-base font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-white"
+                onClick={() => setOpen(false)}
+              >
+                Личный кабинет
+              </Link>
               <Link href="/kontakty#zapis" className="btn-primary mt-3 text-center" onClick={() => setOpen(false)}>
                 Записаться
               </Link>

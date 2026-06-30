@@ -37,6 +37,7 @@ export const FOOTER_NAV = [
   { href: "/oplata", label: "Оплата и сертификаты" },
   { href: "/trenazhyor", label: "Тренажёр-тест" },
   { href: "/docs", label: "Сведения об организации" },
+  { href: "/cabinet", label: "Личный кабинет" },
   { href: "/kontakty", label: "Контакты" },
 ] as const;
 

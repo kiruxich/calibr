@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { CLIENT_COOKIE, readClientToken } from "@/lib/client-auth";
 
 /**
- * Protects /admin (Next.js 16 renamed Middleware → Proxy).
- * Unauthenticated requests are redirected to /admin/login. The login page and
- * its auth action are always reachable.
+ * Protects /admin and /cabinet (Next.js 16 renamed Middleware → Proxy).
+ * Unauthenticated requests are redirected to the matching login page.
+ * The login pages and their auth actions are always reachable.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── Client cabinet ──
+  if (pathname.startsWith("/cabinet")) {
+    if (pathname === "/cabinet/login") return NextResponse.next();
+    const phone = await readClientToken(request.cookies.get(CLIENT_COOKIE)?.value);
+    if (!phone) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/cabinet/login";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  // ── Admin ──
   if (pathname === "/admin/login") {
     return NextResponse.next();
   }
@@ -28,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/cabinet/:path*"],
 };

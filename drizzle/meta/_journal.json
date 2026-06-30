@@ -8,6 +8,13 @@
       "when": 1782745211172,
       "tag": "0000_silent_boom_boom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782800000000,
+      "tag": "0001_add_otp_codes",
+      "breakpoints": true
     }
   ]
 }
