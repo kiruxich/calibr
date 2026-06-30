@@ -13,7 +13,7 @@ import * as schema from "./schema";
 type Db = ReturnType<typeof createDb>;
 
 function createDb() {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!url) throw new Error("DATABASE_URL is not set");
   const sql = neon(url);
   return drizzle(sql, { schema });
@@ -28,5 +28,5 @@ export function getDb(): Db {
 
 /** True when a database connection string is configured. */
 export function hasDb() {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
 }
