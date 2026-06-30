@@ -77,7 +77,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={`${manrope.variable} ${unbounded.variable} h-full`}>
+    <html
+      lang="ru"
+      data-scroll-behavior="smooth"
+      className={`${manrope.variable} ${unbounded.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col bg-[var(--bg)] text-[var(--text)]">
         <SiteLayout>{children}</SiteLayout>
       </body>

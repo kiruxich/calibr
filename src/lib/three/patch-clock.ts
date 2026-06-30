@@ -1,61 +1,33 @@
 /**
- * Drop-in replacement for deprecated THREE.Clock (r183+).
- * @react-three/fiber v9 still instantiates THREE.Clock internally; this shim
- * removes the console warning while preserving the same API R3F expects.
+ * Suppresses the THREE.Clock deprecation warning from @react-three/fiber v9.
  *
- * Must be imported before `@react-three/fiber` (see ShopifyHeroScene.tsx).
+ * Replacing THREE.Clock on the three.js namespace fails in Turbopack/ESM
+ * ("Attempted to assign to readonly property"). A targeted console.warn filter
+ * is safe and keeps the 3D scene working.
+ *
+ * Import before `@react-three/fiber` (see ShopifyHeroScene.tsx).
  */
-import * as THREE from "three";
+const PATCHED = Symbol.for("calibr.three.clock.warn");
 
-class LegacyClock {
-  autoStart: boolean;
-  startTime = 0;
-  oldTime = 0;
-  elapsedTime = 0;
-  running = false;
+function installClockWarnFilter() {
+  const g = globalThis as typeof globalThis & { [key: symbol]: boolean };
+  if (g[PATCHED]) return;
+  g[PATCHED] = true;
 
-  constructor(autoStart = true) {
-    this.autoStart = autoStart;
-  }
-
-  start() {
-    this.startTime = performance.now();
-    this.oldTime = this.startTime;
-    this.elapsedTime = 0;
-    this.running = true;
-  }
-
-  stop() {
-    this.getElapsedTime();
-    this.running = false;
-    this.autoStart = false;
-  }
-
-  getElapsedTime() {
-    this.getDelta();
-    return this.elapsedTime;
-  }
-
-  getDelta() {
-    let diff = 0;
-
-    if (this.autoStart && !this.running) {
-      this.start();
-      return 0;
+  const original = console.warn.bind(console);
+  console.warn = (...args: unknown[]) => {
+    const first = args[0];
+    if (
+      typeof first === "string" &&
+      first.includes("THREE.Clock") &&
+      first.includes("deprecated")
+    ) {
+      return;
     }
-
-    if (this.running) {
-      const newTime = performance.now();
-      diff = (newTime - this.oldTime) / 1000;
-      this.oldTime = newTime;
-      this.elapsedTime += diff;
-    }
-
-    return diff;
-  }
+    original(...args);
+  };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(THREE as any).Clock = LegacyClock;
+installClockWarnFilter();
 
 export {};
