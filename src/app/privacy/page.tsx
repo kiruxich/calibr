@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <section className="container-page py-16 sm:py-20">
+    <section className="container-page pb-16 pt-28 sm:pb-20 sm:pt-32">
       <h1 className="section-title">Политика конфиденциальности</h1>
       <div className="prose-content mt-8 max-w-3xl">
         <p>

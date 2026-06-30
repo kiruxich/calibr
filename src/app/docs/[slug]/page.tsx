@@ -25,8 +25,8 @@ export default async function DocSectionPage({ params }: Props) {
 
   return (
     <>
-      <section className="bg-[var(--bg-elevated)] py-8">
-        <div className="container-page">
+      <section className="page-hero">
+        <div className="container-page relative">
           <Link href="/docs" className="text-sm text-[var(--accent)] hover:underline">
             ← Все сведения
           </Link>

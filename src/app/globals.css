@@ -266,8 +266,9 @@ html[class*="vi-scheme-"] h4 {
 .prose-content strong { @apply font-semibold text-white; }
 
 /* ── Page hero strip ── */
+/* Top padding clears the fixed header (~92px tall) so titles aren't covered. */
 .page-hero {
-  @apply relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] py-16 sm:py-24;
+  @apply relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] pb-12 pt-28 sm:pb-16 sm:pt-32;
 }
 .page-hero::before {
   content: "";

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookingForm } from "@/components/booking/BookingForm";
 import { Download } from "lucide-react";
+import { DIRECTION_LABELS, type ScheduleDirection } from "@/lib/data/schedule";
 
 export interface ServicePageProps {
   title: string;
@@ -25,7 +26,9 @@ export function ServicePageTemplate({
     <>
       <section className="page-hero">
         <div className="container-page relative">
-          <p className="section-label">{direction.replace(/-/g, " ")}</p>
+          <p className="section-label">
+            {DIRECTION_LABELS[direction as ScheduleDirection] ?? "Направление"}
+          </p>
           <h1 className="section-title mt-3 max-w-3xl">{title}</h1>
           <p className="section-subtitle">{subtitle}</p>
           <Link href={`/kontakty?service=${direction}#zapis`} className="btn-primary mt-8 inline-flex">
