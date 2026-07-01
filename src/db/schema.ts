@@ -49,6 +49,12 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Small key/value store for app-managed settings (e.g. auto session secret). */
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
 /** Administrator accounts with roles (owner | admin | manager). */
 export const admins = pgTable("admins", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -84,3 +90,4 @@ export type BookingRow = typeof bookings.$inferSelect;
 export type OtpCodeRow = typeof otpCodes.$inferSelect;
 export type ClientRow = typeof clients.$inferSelect;
 export type AdminRow = typeof admins.$inferSelect;
+export type AppSettingRow = typeof appSettings.$inferSelect;

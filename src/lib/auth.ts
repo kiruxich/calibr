@@ -2,11 +2,13 @@
  * Lightweight admin session: an HMAC-signed cookie (no external deps).
  * Uses Web Crypto so it works in both the Edge (proxy.ts) and Node runtimes.
  *
- * Env:
- *   ADMIN_PASSWORD        — the admin login password (required for /admin)
- *   ADMIN_SESSION_SECRET  — secret for signing the session cookie
- *                           (falls back to ADMIN_PASSWORD if unset)
+ * Env (all optional):
+ *   ADMIN_PASSWORD        — bootstrap owner password / no-DB fallback login
+ *   ADMIN_SESSION_SECRET  — pin the cookie-signing secret (otherwise it is
+ *                           auto-generated and stored in the DB — see secret.ts)
  */
+
+import { getSessionSecret } from "./secret";
 
 export const SESSION_COOKIE = "calibr_admin";
 const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 hours
@@ -49,10 +51,6 @@ export function canManageAdmins(role: AdminRole) {
   return role === "owner";
 }
 
-function getSecret() {
-  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || "";
-}
-
 function toBase64Url(bytes: Uint8Array) {
   let binary = "";
   for (const b of bytes) binary += String.fromCharCode(b);
@@ -68,10 +66,10 @@ function fromBase64Url(input: string) {
   return bytes;
 }
 
-async function hmac(data: string) {
+async function hmac(data: string, secret: string) {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(getSecret()),
+    new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -95,7 +93,7 @@ export async function createSessionToken(sub: string, role: AdminRole) {
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
   };
   const data = toBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
-  const sig = await hmac(data);
+  const sig = await hmac(data, await getSessionSecret());
   return `${data}.${sig}`;
 }
 
@@ -103,11 +101,11 @@ export async function createSessionToken(sub: string, role: AdminRole) {
 export async function readAdminSession(
   token: string | undefined | null,
 ): Promise<AdminSession | null> {
-  if (!token || !getSecret()) return null;
+  if (!token) return null;
   const [data, sig] = token.split(".");
   if (!data || !sig) return null;
 
-  const expected = await hmac(data);
+  const expected = await hmac(data, await getSessionSecret());
   if (!timingSafeEqual(sig, expected)) return null;
 
   try {

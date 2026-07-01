@@ -29,6 +29,7 @@ import {
   updateAdminRoleAction,
   resetAdminPasswordAction,
   deleteAdminAction,
+  changeOwnPasswordAction,
   logoutAction,
 } from "./actions";
 
@@ -46,6 +47,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   last_owner: "Нельзя убрать последнего владельца.",
   self_demote: "Нельзя понизить свою собственную роль владельца.",
   self_delete: "Нельзя удалить собственную учётную запись.",
+  bad_current: "Текущий пароль указан неверно.",
+  legacy_pw: "Смена пароля доступна только для аккаунтов в базе данных.",
 };
 
 const ROLE_OPTIONS = ADMIN_ROLES.map((r) => ({
@@ -56,10 +59,10 @@ const ROLE_OPTIONS = ADMIN_ROLES.map((r) => ({
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   const dbReady = hasDb();
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
   const session = await getAdminSession();
   const role: AdminRole = session?.role ?? "manager";
   const maySchedule = canManageSchedule(role);
@@ -94,6 +97,41 @@ export default async function AdminDashboard({
         <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-4 text-sm text-[var(--error)]">
           {ERROR_MESSAGES[error]}
         </p>
+      )}
+
+      {ok === "pw" && (
+        <p className="rounded-lg border border-[var(--success)]/40 bg-[var(--success)]/10 p-4 text-sm text-[var(--success)]">
+          Пароль изменён.
+        </p>
+      )}
+
+      {/* ── Свой пароль ── */}
+      {dbReady && session?.sub && session.sub !== "legacy" && (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold text-white">Мой пароль</h2>
+          <form
+            action={changeOwnPasswordAction}
+            className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-3"
+          >
+            <TextInput
+              name="current"
+              type="password"
+              placeholder="Текущий пароль"
+              required
+              autoComplete="current-password"
+            />
+            <TextInput
+              name="password"
+              type="password"
+              placeholder="Новый пароль (от 6)"
+              required
+              autoComplete="new-password"
+            />
+            <button type="submit" className="btn-primary text-sm">
+              Сменить пароль
+            </button>
+          </form>
+        </section>
       )}
 
       {!dbReady && (

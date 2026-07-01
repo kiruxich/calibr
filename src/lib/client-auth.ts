@@ -7,16 +7,13 @@
  *                           ADMIN_SESSION_SECRET, then ADMIN_PASSWORD)
  */
 
+import { getSessionSecret } from "./secret";
+
 export const CLIENT_COOKIE = "calibr_client";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
-function getSecret() {
-  return (
-    process.env.CLIENT_SESSION_SECRET ||
-    process.env.ADMIN_SESSION_SECRET ||
-    process.env.ADMIN_PASSWORD ||
-    "calibr-client-fallback-secret"
-  );
+async function getSecret() {
+  return process.env.CLIENT_SESSION_SECRET || (await getSessionSecret());
 }
 
 function toBase64Url(bytes: Uint8Array) {
@@ -37,7 +34,7 @@ function fromBase64Url(input: string) {
 async function hmac(data: string) {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(getSecret()),
+    new TextEncoder().encode(await getSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],

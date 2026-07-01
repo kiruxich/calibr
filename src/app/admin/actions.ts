@@ -14,8 +14,10 @@ import {
   type AdminRole,
   type AdminSession,
 } from "@/lib/auth";
+import { headers } from "next/headers";
 import { getAdminSession } from "@/lib/admin-session";
 import { hashPassword, verifyPasswordHash } from "@/lib/client-auth";
+import { rateLimit, resetRateLimit } from "@/lib/rate-limit";
 import { hasDb } from "@/db";
 import {
   countAdmins,
@@ -91,10 +93,25 @@ async function ensureOwnerSeed() {
 
 // ── Auth ──
 
+const LOGIN_LIMIT = 8;
+const LOGIN_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+async function clientIp() {
+  const h = await headers();
+  const fwd = h.get("x-forwarded-for");
+  return fwd?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+}
+
 export async function loginAction(formData: FormData) {
   const login = String(formData.get("login") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const from = String(formData.get("from") ?? "/admin");
+
+  // Rate-limit by IP (+ login) to blunt brute-force attempts.
+  const key = `admin-login:${await clientIp()}:${login}`;
+  if (!rateLimit(key, LOGIN_LIMIT, LOGIN_WINDOW_MS).allowed) {
+    redirect("/admin/login?error=rate");
+  }
 
   if (hasDb()) {
     await ensureOwnerSeed();
@@ -102,6 +119,7 @@ export async function loginAction(formData: FormData) {
     if (!admin || !(await verifyPasswordHash(password, admin.passwordHash))) {
       redirect("/admin/login?error=1");
     }
+    resetRateLimit(key);
     await startSession(admin.id, admin.role as AdminRole, from);
     return;
   }
@@ -110,7 +128,26 @@ export async function loginAction(formData: FormData) {
   if (!verifyPassword(password)) {
     redirect("/admin/login?error=1");
   }
+  resetRateLimit(key);
   await startSession("legacy", "owner", from);
+}
+
+/** Any logged-in admin can change their own password (DB accounts only). */
+export async function changeOwnPasswordAction(formData: FormData) {
+  const session = await requireAuth();
+  if (!hasDb() || session.sub === "legacy") {
+    redirect("/admin?error=legacy_pw");
+  }
+  const current = String(formData.get("current") ?? "");
+  const next = String(formData.get("password") ?? "");
+  if (next.length < 6) redirect("/admin?error=admin_input");
+
+  const admin = await getAdminById(session.sub);
+  if (!admin || !(await verifyPasswordHash(current, admin.passwordHash))) {
+    redirect("/admin?error=bad_current");
+  }
+  await updateAdminPassword(admin.id, await hashPassword(next));
+  redirect("/admin?ok=pw");
 }
 
 export async function logoutAction() {

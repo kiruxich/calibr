@@ -40,7 +40,9 @@ export default async function AdminLoginPage({
 
         {error && (
           <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">
-            Неверный пароль.
+            {error === "rate"
+              ? "Слишком много попыток входа. Подождите несколько минут и попробуйте снова."
+              : "Неверный логин или пароль."}
           </p>
         )}
 
