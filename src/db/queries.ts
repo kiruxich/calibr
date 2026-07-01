@@ -1,6 +1,7 @@
 import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { getDb, hasDb } from "./index";
-import { bookings, clients, otpCodes, scheduleSlots, weeklySchedule } from "./schema";
+import { admins, bookings, clients, otpCodes, scheduleSlots, weeklySchedule } from "./schema";
+import type { AdminRole } from "@/lib/auth";
 import { normalizePhone } from "@/lib/client-auth";
 import {
   generateUpcomingSlots,
@@ -180,6 +181,78 @@ export async function getBookingsByPhone(phone: string) {
   const rows = await getDb().select().from(bookings).orderBy(desc(bookings.createdAt));
   // Phones are stored as the user typed them; match on normalised digits.
   return rows.filter((b) => normalizePhone(b.phone) === norm);
+}
+
+// ── Administrator accounts ──
+
+export async function countAdmins() {
+  if (!hasDb()) return 0;
+  const rows = await getDb().select({ id: admins.id }).from(admins);
+  return rows.length;
+}
+
+export async function listAdmins() {
+  if (!hasDb()) return [];
+  return getDb().select().from(admins).orderBy(asc(admins.createdAt));
+}
+
+export async function getAdminByLogin(login: string) {
+  if (!hasDb()) return null;
+  const [row] = await getDb()
+    .select()
+    .from(admins)
+    .where(eq(admins.login, login.trim().toLowerCase()))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function getAdminById(id: string) {
+  if (!hasDb()) return null;
+  const [row] = await getDb().select().from(admins).where(eq(admins.id, id)).limit(1);
+  return row ?? null;
+}
+
+/** Creates an admin. Returns null if the login is already taken. */
+export async function createAdmin(input: {
+  login: string;
+  name: string;
+  passwordHash: string;
+  role: AdminRole;
+}) {
+  const db = getDb();
+  const login = input.login.trim().toLowerCase();
+  const existing = await db
+    .select({ id: admins.id })
+    .from(admins)
+    .where(eq(admins.login, login))
+    .limit(1);
+  if (existing.length > 0) return null;
+  const [row] = await db
+    .insert(admins)
+    .values({ login, name: input.name, passwordHash: input.passwordHash, role: input.role })
+    .returning();
+  return row;
+}
+
+export async function updateAdminRole(id: string, role: AdminRole) {
+  await getDb().update(admins).set({ role }).where(eq(admins.id, id));
+}
+
+export async function updateAdminPassword(id: string, passwordHash: string) {
+  await getDb().update(admins).set({ passwordHash }).where(eq(admins.id, id));
+}
+
+export async function deleteAdmin(id: string) {
+  await getDb().delete(admins).where(eq(admins.id, id));
+}
+
+export async function countOwners() {
+  if (!hasDb()) return 0;
+  const rows = await getDb()
+    .select({ id: admins.id })
+    .from(admins)
+    .where(eq(admins.role, "owner"));
+  return rows.length;
 }
 
 // ── Client accounts (login/password) ──

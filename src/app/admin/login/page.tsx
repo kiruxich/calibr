@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hasDb } from "@/db";
 import { FieldLabel, TextInput } from "@/components/ui/form";
 import { loginAction } from "../actions";
 
@@ -15,7 +16,10 @@ export default async function AdminLoginPage({
   searchParams: Promise<{ error?: string; from?: string }>;
 }) {
   const { error, from } = await searchParams;
-  const hasPassword = Boolean(process.env.ADMIN_PASSWORD);
+  const dbReady = hasDb();
+  // With a DB, login goes through admin accounts (seeded from ADMIN_PASSWORD).
+  // Without a DB, the single shared ADMIN_PASSWORD is used.
+  const hasPassword = dbReady || Boolean(process.env.ADMIN_PASSWORD);
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-20">
@@ -42,12 +46,24 @@ export default async function AdminLoginPage({
 
         <form action={loginAction} className="space-y-4">
           <input type="hidden" name="from" value={from ?? "/admin"} />
+          {dbReady && (
+            <FieldLabel label="Логин" required>
+              <TextInput
+                name="login"
+                required
+                autoFocus
+                autoComplete="username"
+                placeholder="Ваш логин"
+              />
+            </FieldLabel>
+          )}
           <FieldLabel label="Пароль" required>
             <TextInput
               name="password"
               type="password"
               required
-              autoFocus
+              autoFocus={!dbReady}
+              autoComplete="current-password"
               placeholder="••••••••"
             />
           </FieldLabel>

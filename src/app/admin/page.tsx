@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { hasDb } from "@/db";
-import { getAllSlots, getWeeklySchedule, getBookings } from "@/db/queries";
+import { getAllSlots, getWeeklySchedule, getBookings, listAdmins } from "@/db/queries";
+import { getAdminSession } from "@/lib/admin-session";
+import {
+  ADMIN_ROLES,
+  ROLE_HINTS,
+  ROLE_LABELS,
+  canManageAdmins,
+  canManageSchedule,
+  type AdminRole,
+} from "@/lib/auth";
 import {
   DateInput,
   DirectionSelect,
   NumberInput,
+  Select,
   TextInput,
   TimeInput,
 } from "@/components/ui/form";
@@ -15,6 +25,10 @@ import {
   createWeeklyAction,
   updateWeeklyAction,
   deleteWeeklyAction,
+  createAdminAction,
+  updateAdminRoleAction,
+  resetAdminPasswordAction,
+  deleteAdminAction,
   logoutAction,
 } from "./actions";
 
@@ -25,21 +39,48 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
+const ERROR_MESSAGES: Record<string, string> = {
+  forbidden: "Недостаточно прав для этого действия.",
+  admin_input: "Проверьте поля: логин от 3 символов, пароль от 6.",
+  admin_exists: "Администратор с таким логином уже существует.",
+  last_owner: "Нельзя убрать последнего владельца.",
+  self_demote: "Нельзя понизить свою собственную роль владельца.",
+  self_delete: "Нельзя удалить собственную учётную запись.",
+};
+
+const ROLE_OPTIONS = ADMIN_ROLES.map((r) => ({
+  value: r,
+  label: `${ROLE_LABELS[r]} — ${ROLE_HINTS[r]}`,
+}));
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const dbReady = hasDb();
-  const [slots, weekly, bookings] = await Promise.all([
+  const { error } = await searchParams;
+  const session = await getAdminSession();
+  const role: AdminRole = session?.role ?? "manager";
+  const maySchedule = canManageSchedule(role);
+  const mayAdmins = canManageAdmins(role);
+
+  const [slots, weekly, bookings, adminList] = await Promise.all([
     getAllSlots(),
     getWeeklySchedule(),
     getBookings(),
+    mayAdmins ? listAdmins() : Promise.resolve([]),
   ]);
 
   return (
     <div className="container-page space-y-12 pb-12 pt-28 sm:pt-32">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Админка · Расписание</h1>
+          <h1 className="text-2xl font-semibold text-white">Админка · КАЛИБР</h1>
           <p className="text-sm text-[var(--text-secondary)]">
-            Управление слотами, недельной сеткой и заявками
+            Ваша роль:{" "}
+            <span className="font-medium text-[var(--accent)]">{ROLE_LABELS[role]}</span>{" "}
+            · {ROLE_HINTS[role]}
           </p>
         </div>
         <form action={logoutAction}>
@@ -48,6 +89,12 @@ export default async function AdminDashboard() {
           </button>
         </form>
       </header>
+
+      {error && ERROR_MESSAGES[error] && (
+        <p className="rounded-lg border border-[var(--error)]/40 bg-[var(--error)]/10 p-4 text-sm text-[var(--error)]">
+          {ERROR_MESSAGES[error]}
+        </p>
+      )}
 
       {!dbReady && (
         <p className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent-muted)] p-4 text-sm text-[var(--accent)]">
@@ -58,6 +105,8 @@ export default async function AdminDashboard() {
       )}
 
       {/* ── Slots ── */}
+      {maySchedule && (
+      <>
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">Слоты записи</h2>
 
@@ -206,6 +255,16 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
+      </>
+      )}
+
+      {!maySchedule && (
+        <p className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--text-secondary)]">
+          Управление расписанием доступно администраторам и владельцу. Ваша роль —
+          «{ROLE_LABELS[role]}»: доступен просмотр заявок.
+        </p>
+      )}
+
       {/* ── Bookings ── */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">
@@ -251,6 +310,107 @@ export default async function AdminDashboard() {
           </div>
         )}
       </section>
+
+      {/* ── Administrators (owner only) ── */}
+      {mayAdmins && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Администраторы</h2>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Учётные записи и роли. Владелец управляет доступом; администратор ведёт
+              расписание и заявки; менеджер только просматривает заявки.
+            </p>
+          </div>
+
+          <form
+            action={createAdminAction}
+            className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-5"
+          >
+            <TextInput name="login" placeholder="Логин" required autoComplete="off" />
+            <TextInput name="name" placeholder="Имя" required autoComplete="off" />
+            <TextInput
+              name="password"
+              type="password"
+              placeholder="Пароль (от 6)"
+              required
+              autoComplete="new-password"
+            />
+            <Select name="role" options={ROLE_OPTIONS} defaultValue="manager" />
+            <button type="submit" disabled={!dbReady} className="btn-primary text-sm">
+              Добавить
+            </button>
+          </form>
+
+          <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="bg-[var(--surface)] text-left text-[var(--text-secondary)]">
+                <tr>
+                  <th className="p-3">Логин</th>
+                  <th className="p-3">Имя</th>
+                  <th className="p-3">Роль</th>
+                  <th className="p-3">Новый пароль</th>
+                  <th className="p-3">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminList.map((a) => (
+                  <tr key={a.id} className="border-t border-[var(--border)] align-middle">
+                    <td className="p-3 text-white">
+                      {a.login}
+                      {a.id === session?.sub && (
+                        <span className="ml-2 text-xs text-[var(--text-muted)]">(вы)</span>
+                      )}
+                    </td>
+                    <td className="p-3">{a.name}</td>
+                    <td className="p-2">
+                      <form action={updateAdminRoleAction} id={`role-${a.id}`} className="flex items-center gap-2">
+                        <input type="hidden" name="id" value={a.id} />
+                        <Select
+                          name="role"
+                          form={`role-${a.id}`}
+                          options={ROLE_OPTIONS}
+                          defaultValue={a.role}
+                        />
+                        <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                          Сохранить
+                        </button>
+                      </form>
+                    </td>
+                    <td className="p-2">
+                      <form action={resetAdminPasswordAction} className="flex items-center gap-2">
+                        <input type="hidden" name="id" value={a.id} />
+                        <TextInput
+                          name="password"
+                          type="password"
+                          placeholder="от 6 символов"
+                          autoComplete="new-password"
+                          className="w-36"
+                        />
+                        <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                          Сбросить
+                        </button>
+                      </form>
+                    </td>
+                    <td className="p-2">
+                      {a.id !== session?.sub && (
+                        <form action={deleteAdminAction}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <button
+                            type="submit"
+                            className="rounded-lg border border-[var(--error)]/40 px-3 py-1.5 text-xs text-[var(--error)]"
+                          >
+                            Удалить
+                          </button>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -11,6 +11,44 @@
 export const SESSION_COOKIE = "calibr_admin";
 const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 hours
 
+// ── Roles & permissions (pure — safe to import from Edge proxy) ──
+
+export type AdminRole = "owner" | "admin" | "manager";
+
+export interface AdminSession {
+  /** admin id (or "legacy" when running on the single-password fallback) */
+  sub: string;
+  role: AdminRole;
+}
+
+export const ADMIN_ROLES: AdminRole[] = ["owner", "admin", "manager"];
+
+export const ROLE_LABELS: Record<AdminRole, string> = {
+  owner: "Владелец",
+  admin: "Администратор",
+  manager: "Менеджер",
+};
+
+export const ROLE_HINTS: Record<AdminRole, string> = {
+  owner: "Полный доступ, управление администраторами",
+  admin: "Расписание и заявки",
+  manager: "Просмотр заявок",
+};
+
+function isAdminRole(value: unknown): value is AdminRole {
+  return value === "owner" || value === "admin" || value === "manager";
+}
+
+/** Can edit slots and the weekly grid. */
+export function canManageSchedule(role: AdminRole) {
+  return role === "owner" || role === "admin";
+}
+
+/** Can create/edit/remove administrator accounts. */
+export function canManageAdmins(role: AdminRole) {
+  return role === "owner";
+}
+
 function getSecret() {
   return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || "";
 }
@@ -49,31 +87,48 @@ function timingSafeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-/** Creates a signed session token valid for SESSION_TTL_SECONDS. */
-export async function createSessionToken() {
-  const payload = { exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS };
+/** Creates a signed session token (carrying admin id + role) valid for the TTL. */
+export async function createSessionToken(sub: string, role: AdminRole) {
+  const payload = {
+    sub,
+    role,
+    exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+  };
   const data = toBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
   const sig = await hmac(data);
   return `${data}.${sig}`;
 }
 
-/** Verifies a session token's signature and expiry. */
-export async function verifySessionToken(token: string | undefined | null) {
-  if (!token || !getSecret()) return false;
+/** Verifies a token and returns its session (id + role), or null if invalid. */
+export async function readAdminSession(
+  token: string | undefined | null,
+): Promise<AdminSession | null> {
+  if (!token || !getSecret()) return null;
   const [data, sig] = token.split(".");
-  if (!data || !sig) return false;
+  if (!data || !sig) return null;
 
   const expected = await hmac(data);
-  if (!timingSafeEqual(sig, expected)) return false;
+  if (!timingSafeEqual(sig, expected)) return null;
 
   try {
     const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(data))) as {
+      sub?: string;
+      role?: unknown;
       exp?: number;
     };
-    return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
+    if (typeof payload.exp !== "number" || payload.exp <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+    if (typeof payload.sub !== "string" || !isAdminRole(payload.role)) return null;
+    return { sub: payload.sub, role: payload.role };
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Boolean session check (used by the Edge proxy). */
+export async function verifySessionToken(token: string | undefined | null) {
+  return (await readAdminSession(token)) !== null;
 }
 
 /** Checks the submitted password against ADMIN_PASSWORD. */

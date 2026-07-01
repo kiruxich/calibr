@@ -49,6 +49,16 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Administrator accounts with roles (owner | admin | manager). */
+export const admins = pgTable("admins", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  login: text("login").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("manager"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /** Registered client accounts (login by phone + password). */
 export const clients = pgTable("clients", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -73,3 +83,4 @@ export type WeeklyScheduleRow = typeof weeklySchedule.$inferSelect;
 export type BookingRow = typeof bookings.$inferSelect;
 export type OtpCodeRow = typeof otpCodes.$inferSelect;
 export type ClientRow = typeof clients.$inferSelect;
+export type AdminRow = typeof admins.$inferSelect;
