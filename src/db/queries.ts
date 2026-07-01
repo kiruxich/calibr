@@ -1,6 +1,6 @@
 import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { getDb, hasDb } from "./index";
-import { bookings, otpCodes, scheduleSlots, weeklySchedule } from "./schema";
+import { bookings, clients, otpCodes, scheduleSlots, weeklySchedule } from "./schema";
 import { normalizePhone } from "@/lib/client-auth";
 import {
   generateUpcomingSlots,
@@ -180,6 +180,48 @@ export async function getBookingsByPhone(phone: string) {
   const rows = await getDb().select().from(bookings).orderBy(desc(bookings.createdAt));
   // Phones are stored as the user typed them; match on normalised digits.
   return rows.filter((b) => normalizePhone(b.phone) === norm);
+}
+
+// ── Client accounts (login/password) ──
+
+/** Finds a registered client by phone (normalised). */
+export async function getClientByPhone(phone: string) {
+  if (!hasDb()) return null;
+  const norm = normalizePhone(phone);
+  const [row] = await getDb()
+    .select()
+    .from(clients)
+    .where(eq(clients.phone, norm))
+    .limit(1);
+  return row ?? null;
+}
+
+/** Registers a new client. Returns null if the phone is already taken. */
+export async function createClient(input: {
+  phone: string;
+  name: string;
+  passwordHash: string;
+}) {
+  const db = getDb();
+  const norm = normalizePhone(input.phone);
+  const existing = await db
+    .select({ id: clients.id })
+    .from(clients)
+    .where(eq(clients.phone, norm))
+    .limit(1);
+  if (existing.length > 0) return null;
+  const [row] = await db
+    .insert(clients)
+    .values({ phone: norm, name: input.name, passwordHash: input.passwordHash })
+    .returning();
+  return row;
+}
+
+/** Updates a client's password (used by password recovery). */
+export async function updateClientPassword(phone: string, passwordHash: string) {
+  const db = getDb();
+  const norm = normalizePhone(phone);
+  await db.update(clients).set({ passwordHash }).where(eq(clients.phone, norm));
 }
 
 /** Creates (or replaces) a one-time login code for a phone, valid 5 minutes. */

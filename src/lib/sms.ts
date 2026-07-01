@@ -12,28 +12,34 @@
 
 export async function sendSmsCode(phone: string, code: string): Promise<void> {
   const text = `Код входа на сайт КАЛИБР: ${code}`;
-  const apiId = process.env.SMS_RU_API_ID;
+  void text;
 
-  if (apiId) {
-    try {
-      const url = new URL("https://sms.ru/sms/send");
-      url.searchParams.set("api_id", apiId);
-      url.searchParams.set("to", phone);
-      url.searchParams.set("msg", text);
-      url.searchParams.set("json", "1");
-      const res = await fetch(url, { method: "POST" });
-      const data = (await res.json()) as { status?: string };
-      if (data.status !== "OK") {
-        console.error("[sms] SMS.ru returned non-OK status:", data);
-      }
-      return;
-    } catch (err) {
-      console.error("[sms] SMS.ru send failed:", err);
-    }
-  }
+  // ─────────────────────────────────────────────────────────────────────────
+  // ВРЕМЕННО ОТКЛЮЧЕНО: реальная отправка СМС через SMS.ru.
+  // Раскомментируйте блок ниже и задайте SMS_RU_API_ID, когда подключите
+  // провайдера. Пока код НЕ отправляется по СМС — см. fallback ниже.
+  // ─────────────────────────────────────────────────────────────────────────
+  // const apiId = process.env.SMS_RU_API_ID;
+  // if (apiId) {
+  //   try {
+  //     const url = new URL("https://sms.ru/sms/send");
+  //     url.searchParams.set("api_id", apiId);
+  //     url.searchParams.set("to", phone);
+  //     url.searchParams.set("msg", text);
+  //     url.searchParams.set("json", "1");
+  //     const res = await fetch(url, { method: "POST" });
+  //     const data = (await res.json()) as { status?: string };
+  //     if (data.status !== "OK") {
+  //       console.error("[sms] SMS.ru returned non-OK status:", data);
+  //     }
+  //     return;
+  //   } catch (err) {
+  //     console.error("[sms] SMS.ru send failed:", err);
+  //   }
+  // }
 
-  // Fallback: no SMS provider configured.
-  console.warn(`[sms] No SMS provider configured. Code for ${phone}: ${code}`);
+  // Fallback: отправка СМС отключена — логируем код и дублируем в Telegram.
+  console.warn(`[sms] SMS sending disabled. Code for ${phone}: ${code}`);
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

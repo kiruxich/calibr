@@ -13,7 +13,8 @@ export async function proxy(request: NextRequest) {
 
   // ── Client cabinet ──
   if (pathname.startsWith("/cabinet")) {
-    if (pathname === "/cabinet/login") return NextResponse.next();
+    const publicCabinet = ["/cabinet/login", "/cabinet/register", "/cabinet/forgot"];
+    if (publicCabinet.includes(pathname)) return NextResponse.next();
     const phone = await readClientToken(request.cookies.get(CLIENT_COOKIE)?.value);
     if (!phone) {
       const url = request.nextUrl.clone();

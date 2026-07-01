@@ -49,6 +49,15 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Registered client accounts (login by phone + password). */
+export const clients = pgTable("clients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  phone: text("phone").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /** One-time codes for client cabinet login (SMS). */
 export const otpCodes = pgTable("otp_codes", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -63,3 +72,4 @@ export type ScheduleSlotRow = typeof scheduleSlots.$inferSelect;
 export type WeeklyScheduleRow = typeof weeklySchedule.$inferSelect;
 export type BookingRow = typeof bookings.$inferSelect;
 export type OtpCodeRow = typeof otpCodes.$inferSelect;
+export type ClientRow = typeof clients.$inferSelect;

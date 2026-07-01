@@ -95,3 +95,44 @@ export function normalizePhone(input: string) {
   if (digits.length === 10) digits = "7" + digits;
   return digits;
 }
+
+// ── Password hashing (PBKDF2-SHA256 via Web Crypto, no external deps) ──
+
+const PBKDF2_ITERATIONS = 100_000;
+
+/** Hashes a password. Returns `iterations$saltB64u$hashB64u`. */
+export async function hashPassword(password: string) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const bits = await deriveBits(password, salt);
+  return `${PBKDF2_ITERATIONS}$${toBase64Url(salt)}$${toBase64Url(new Uint8Array(bits))}`;
+}
+
+/** Verifies a password against a stored `iterations$salt$hash` string. */
+export async function verifyPasswordHash(password: string, stored: string) {
+  const [iterStr, saltStr, hashStr] = stored.split("$");
+  if (!iterStr || !saltStr || !hashStr) return false;
+  const iterations = Number(iterStr);
+  if (!Number.isFinite(iterations)) return false;
+  const salt = fromBase64Url(saltStr);
+  const bits = await deriveBits(password, salt, iterations);
+  return timingSafeEqual(toBase64Url(new Uint8Array(bits)), hashStr);
+}
+
+async function deriveBits(
+  password: string,
+  salt: BufferSource,
+  iterations = PBKDF2_ITERATIONS,
+) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  return crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    key,
+    256,
+  );
+}

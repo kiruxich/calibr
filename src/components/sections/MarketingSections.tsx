@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Star, Camera, User, Gift, Quote } from "lucide-react";
 import { REVIEWS, INSTRUCTORS, GALLERY, PROMOS } from "@/lib/data/marketing";
@@ -25,13 +26,18 @@ export function ReviewsSection() {
             <p className="section-label">Отзывы</p>
             <h2 className="section-title mt-2">Нам доверяют</h2>
           </div>
-          <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+          <a
+            href={SITE.yandexMapsOrg + "reviews/"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 transition hover:border-[var(--accent)]"
+          >
             <span className="text-3xl font-bold text-[var(--accent)]">{SITE.rating.value}</span>
             <div>
               <Stars n={5} />
-              <p className="mt-1 text-xs text-[var(--text-muted)]">{SITE.rating.count} отзывов · Яндекс, 2ГИС</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">{SITE.rating.count} отзывов на Яндекс.Картах</p>
             </div>
-          </div>
+          </a>
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -95,16 +101,26 @@ export function GallerySection() {
       <div className="container-page">
         <p className="section-label">Галерея</p>
         <h2 className="section-title mt-2">Наш тир и занятия</h2>
-        <p className="section-subtitle">Фотографии стрелковой галереи, классов и тренировок появятся здесь.</p>
+        <p className="section-subtitle">Фотографии стрелковой галереи и школы «Калибр».</p>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
           {GALLERY.map((g) => (
             <div
               key={g.id}
-              className="group relative flex aspect-[4/3] items-end overflow-hidden rounded-xl border border-dashed border-[var(--border-light)] bg-[var(--surface)]"
+              className="group relative flex aspect-[3/4] items-end overflow-hidden rounded-xl border border-[var(--border-light)] bg-[var(--surface)]"
             >
-              <Camera className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <span className="relative w-full bg-gradient-to-t from-black/70 to-transparent p-3 text-xs font-medium text-white">
+              {g.src ? (
+                <Image
+                  src={g.src}
+                  alt={g.caption}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <Camera className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              )}
+              <span className="relative w-full bg-gradient-to-t from-black/80 to-transparent p-3 text-xs font-medium text-white">
                 {g.caption}
               </span>
             </div>

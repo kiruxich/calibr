@@ -13,11 +13,12 @@ export const SITE = {
     { label: "Дополнительный", value: "+79253444514", display: "+7 (925) 344-45-14" },
   ],
   youtube: "https://www.youtube.com/embed/AQzfHz-DuwQ",
-  yandexMapsOrg: "https://yandex.ru/maps/",
+  yandexMapsOrg:
+    "https://yandex.ru/maps/org/shkola_strelkovoy_podgotovki_kalibr/240026747872/",
   max: "kalibr_school",
   maxUrl: "https://max.ru/kalibr_school",
   telegram: "kalibr_school",
-  rating: { value: 4.9, count: 127 },
+  rating: { value: 4.9, count: 59 },
   geo: { lat: 55.31556, lng: 38.69556 },
   founded: 2016,
 } as const;
