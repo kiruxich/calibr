@@ -76,7 +76,7 @@ export default function ContactsPage() {
 
           <div className="aspect-video overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--muted)]">
             <iframe
-              src="https://yandex.ru/map-widget/v1/?text=Воскресенск+Московская+23&z=16"
+              src="https://yandex.ru/map-widget/v1/?mode=search&oid=240026747872&ol=biz&z=16"
               title="Карта — школа КАЛИБР"
               className="h-full w-full"
               loading="lazy"
